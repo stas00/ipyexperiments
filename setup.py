@@ -4,8 +4,14 @@ from setuptools import setup, find_packages
 
 with open('README.md') as readme_file: readme = readme_file.read()
 
-requirements = [ ]
+def to_list(buffer): return list(filter(None, map(str.strip, buffer.splitlines())))
 
+requirements = to_list("""
+  ipython
+  gputil
+  humanize
+  psutil
+""")
 setup_requirements = [ ]
 
 test_requirements = [ ]
