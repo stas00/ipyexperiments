@@ -39,6 +39,7 @@ class IPyExperiments():
 
     def __init__(self):
         print("Starting experiment...")
+        self.running = True
         # base-line
         gc.collect()
         torch.cuda.empty_cache()
@@ -61,7 +62,9 @@ class IPyExperiments():
     def print_mem_stats(self):
         print("Stats:")
 
-    def __del__(self):
+    def finish(self):
+        """ Finish the experiment """
+
         print("Finishing experiment...")
         self.gpu = get_gpu()
         cpu_used = process.memory_info().rss
@@ -101,3 +104,8 @@ class IPyExperiments():
         print(f"GPU: {hs(gpu_reclaimed)} ({gpu_pct*100:.2f}%)")
 
         printm()
+
+        return 0
+
+    def __del__(self):
+        if self.running: self.finish()
