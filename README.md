@@ -26,3 +26,34 @@ cell 8: del exp2
 
 ## Installation
 pip install git+https://github.com/stas00/ipyexperiments.git
+
+## API
+
+1. Create an experiment object:
+   ```python
+   exp1 = IPyExperiments()
+   ```
+
+2. Get intermediary experiment usage stats:
+   ```python
+   consumed, reclaimed, available = exp1.get_stats()
+   ```
+   3 dictionaries are returned. This way is used so that in the future new entries could be added w/o breaking the API.
+
+   ```python
+   print(consumed, reclaimed, available)
+   {'gen_ram': 2147500032, 'gpu_ram': 0} {'gen_ram': 0, 'gpu_ram': 0} {'gen_ram': 9921957888, 'gpu_ram': 7487881216}
+   ```
+   This method is useful for getting stats half-way through the experiment.
+
+3. Finish the experiment, delete local variables, reclaim memory. Return and print the stats:
+   ```python
+   final_consumed, final_reclaimed, final_available = exp1.finish() # finish experiment
+   print("\nNumerical data:\n", final_consumed, final_reclaimed, final_available)
+   ```
+
+   If you don't care for saving the experiment numbers, instead of calling `finish()`, you can just do:
+   ```python
+   del exp1
+   ```
+   If you re-run the experiment w/o either calling `exp1.finish()` or `del exp1`, e.g. if you decided to abort it half-way to the end, then the constructor `IPyExperiments()` will trigger a destructor first and therefore previous experiment's stats will be printed first.
