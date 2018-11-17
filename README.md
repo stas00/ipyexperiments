@@ -59,8 +59,8 @@ pip install git+https://github.com/stas00/ipyexperiments.git
    print("\nNumerical data:\n", final_consumed, final_reclaimed, final_available)
    ```
 
-   If you don't care for saving the experiment numbers, instead of calling `finish()`, you can just do:
+   If you don't care for saving the experiment's numbers, instead of calling `finish()`, you can just do:
    ```python
    del exp1
    ```
-   If you re-run the experiment w/o either calling `exp1.finish()` or `del exp1`, e.g. if you decided to abort it half-way to the end, then the constructor `IPyExperiments()` will trigger a destructor first and therefore previous experiment's stats will be printed first.
+   If you re-run the experiment without either calling `exp1.finish()` or `del exp1`, e.g. if you decided to abort it half-way to the end, or say you hit "cuda: out of memory" error, then re-running the constructor `IPyExperiments()` assigning to the same experiment object, will trigger a destructor first. This will delete the local vars created until that point, reclaim memory and the previous experiment's stats will be printed first.
