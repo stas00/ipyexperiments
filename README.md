@@ -29,7 +29,8 @@ cell 8: del exp2
 ```
 
 ## Demo
-[demo notebook](https://github.com/stas00/ipyexperiments/blob/master/demo.ipynb)
+
+The easiest way to see how this work is to read the [demo notebook](https://github.com/stas00/ipyexperiments/blob/master/demo.ipynb). 
 
 ## Installation
 pip install git+https://github.com/stas00/ipyexperiments.git
@@ -67,6 +68,8 @@ pip install git+https://github.com/stas00/ipyexperiments.git
    del exp1
    ```
    If you re-run the experiment without either calling `exp1.finish()` or `del exp1`, e.g. if you decided to abort it half-way to the end, or say you hit "cuda: out of memory" error, then re-running the constructor `IPyExperiments()` assigning to the same experiment object, will trigger a destructor first. This will delete the local vars created until that point, reclaim memory and the previous experiment's stats will be printed first.
+
+Please refer to the [demo notebook](https://github.com/stas00/ipyexperiments/blob/master/demo.ipynb) to see this API in action.
    
 ## Contributing
 
