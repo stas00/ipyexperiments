@@ -1,2 +1,2 @@
-- print the list of variables that were deleted
-
+- nvidia-smi's default location on windows is
+C:\Program Files\NVIDIA Corporation\NVSMI
