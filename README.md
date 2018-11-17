@@ -30,7 +30,7 @@ cell 8: del exp2
 
 ## Demo
 
-The easiest way to see how this work is to read the [demo notebook](https://github.com/stas00/ipyexperiments/blob/master/demo.ipynb). 
+The easiest way to see how this work is to read the [demo notebook](https://github.com/stas00/ipyexperiments/blob/master/demo.ipynb).
 
 ## Installation
 pip install git+https://github.com/stas00/ipyexperiments.git
@@ -57,7 +57,14 @@ pip install git+https://github.com/stas00/ipyexperiments.git
    ```
    This method is useful for getting stats half-way through the experiment.
 
-3. Finish the experiment, delete local variables, reclaim memory. Return and print the stats:
+3. Save specific local variables to be accessible after the experiment is finished and the rest of the local variables have been deleted.
+
+  ```python
+   exp3.keep_var_names('consumed', 'reclaimed', 'available')
+   ```
+   Note, that you need to pass the names of the variables and not the variables themselves.
+
+4. Finish the experiment, delete local variables, reclaim memory. Return and print the stats:
    ```python
    final_consumed, final_reclaimed, final_available = exp1.finish() # finish experiment
    print("\nNumerical data:\n", final_consumed, final_reclaimed, final_available)
@@ -70,7 +77,7 @@ pip install git+https://github.com/stas00/ipyexperiments.git
    If you re-run the experiment without either calling `exp1.finish()` or `del exp1`, e.g. if you decided to abort it half-way to the end, or say you hit "cuda: out of memory" error, then re-running the constructor `IPyExperiments()` assigning to the same experiment object, will trigger a destructor first. This will delete the local vars created until that point, reclaim memory and the previous experiment's stats will be printed first.
 
 Please refer to the [demo notebook](https://github.com/stas00/ipyexperiments/blob/master/demo.ipynb) to see this API in action.
-   
+
 ## Contributing
 
 PRs with improvements and new features and Issues with suggestions are welcome.

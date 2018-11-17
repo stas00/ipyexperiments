@@ -31,6 +31,7 @@ class IPyExperiments():
         self.running = True
         self.reclaimed = False
         self.start_time = time.time()
+        self.var_names_keep = []
 
         # base-line
         gc.collect()
@@ -40,15 +41,22 @@ class IPyExperiments():
         ipython = get_ipython()
         self.namespace = NamespaceMagics()
         self.namespace.shell = ipython.kernel.shell
-        self.vars = self.get_vars()
-        #print(self.vars)
+        self.var_names_start = self.get_var_names()
+        #print(self.var_names_start)
 
         self.gen_ram_used_start = self._gen_ram_used()
         self.gpu_ram_used_start = self._gpu_ram_used()
         #print(f"gpu used f{self.gpu_ram_used_start}" )
         self.print_state()
 
-    def get_vars(self):
+    def keep_var_names(self, *args):
+        """ Pass a list of local variable **names** to not be deleted at the end of the experiment """
+        for x in args:
+            if not isinstance(x, str):
+                raise Exception('expecting variable names as strings')
+        self.var_names_keep.extend(args)
+
+    def get_var_names(self):
         """ Return a list of local variables created since the beginning of the experiment """
         return self.namespace.who_ls()
 
@@ -110,15 +118,19 @@ class IPyExperiments():
         self.gen_ram_cons = gen_ram_cons
         self.gpu_ram_cons = gpu_ram_cons
 
-        # get the new vars since constructor
-        cur_vars = self.get_vars()
-        #print(cur_vars)
+        # get the new var names since constructor
+        var_names_cur = self.get_var_names()
+        #print(var_names_cur)
 
-        # extract the vars added during the experiment and delete them
-        new_vars = list(set(cur_vars) - set(self.vars))
+        # extract the var names added during the experiment and delete
+        # them, with the exception of those we were told to preserve
+        var_names_new = list(set(var_names_cur) - set(self.var_names_start) - set(self.var_names_keep))
         print("\n*** Deleting the following local variables:")
-        print(new_vars)
-        for x in new_vars: self.namespace.xdel(x)
+        print(var_names_new)
+        for x in var_names_new: self.namespace.xdel(x)
+        if self.var_names_keep:
+            print("\n*** Keeping the following local variables:")
+            print(self.var_names_keep)
 
         # cleanup and reclamation
         collected = gc.collect()
