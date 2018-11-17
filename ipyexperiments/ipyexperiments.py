@@ -1,6 +1,6 @@
 __all__ = ['IPyExperiments']
 
-import gc
+import gc, os, time, psutil
 from IPython import get_ipython
 from IPython.core.magics.namespace import NamespaceMagics # Used to query namespace.
 
@@ -9,10 +9,9 @@ from IPython.core.magics.namespace import NamespaceMagics # Used to query namesp
 # XXX: for now hardcoding torch dependency, but it should be optional
 import torch
 
-import psutil
 import humanize
 hs = humanize.naturalsize
-import os
+
 import GPUtil as GPU
 GPUs = GPU.getGPUs()
 # gpu = GPUs[0] # XXX: gputil doesn't seem to be great as it seems to cache values?
@@ -31,6 +30,7 @@ class IPyExperiments():
         print("Starting experiment...")
         self.running = True
         self.reclaimed = False
+        self.start_time = time.time()
 
         # base-line
         gc.collect()
@@ -143,6 +143,10 @@ class IPyExperiments():
         print(f"GPU: {hs(gpu_ram_recl)} ({gpu_ram_pct*100:.2f}%)")
 
         self.print_state()
+
+        elapsed_time = int(time.time() - self.start_time)
+        print("\n*** Elapsed wallclock time:")
+        print(f"{time.strftime('%H:%M:%S', time.gmtime(elapsed_time))}")
 
         gen_ram_avail, gpu_ram_avail = self._available()
         return self._format_stats(gen_ram_avail, gpu_ram_avail, gen_ram_cons, gpu_ram_cons, gen_ram_recl, gpu_ram_recl)
