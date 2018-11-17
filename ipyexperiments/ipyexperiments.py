@@ -48,6 +48,13 @@ class IPyExperiments():
         self.gpu_ram_used_start = self._gpu_ram_used()
         #print(f"gpu used f{self.gpu_ram_used_start}" )
         self.print_state()
+        print("\n") # extra vertical white space, to not mix with user's outputs
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.__del__()
 
     def keep_var_names(self, *args):
         """ Pass a list of local variable **names** to not be deleted at the end of the experiment """
@@ -154,11 +161,13 @@ class IPyExperiments():
         print(f"Gen: {hs(gen_ram_recl)} ({gen_ram_pct*100:.2f}%)")
         print(f"GPU: {hs(gpu_ram_recl)} ({gpu_ram_pct*100:.2f}%)")
 
-        self.print_state()
-
         elapsed_time = int(time.time() - self.start_time)
         print("\n*** Elapsed wallclock time:")
         print(f"{time.strftime('%H:%M:%S', time.gmtime(elapsed_time))}")
+
+        self.print_state()
+
+        print("\n") # extra vertical white space, to not mix with user's outputs
 
         gen_ram_avail, gpu_ram_avail = self._available()
         return self._format_stats(gen_ram_avail, gpu_ram_avail, gen_ram_cons, gpu_ram_cons, gen_ram_recl, gpu_ram_recl)

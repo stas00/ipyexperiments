@@ -76,6 +76,24 @@ pip install git+https://github.com/stas00/ipyexperiments.git
    ```
    If you re-run the experiment without either calling `exp1.finish()` or `del exp1`, e.g. if you decided to abort it half-way to the end, or say you hit "cuda: out of memory" error, then re-running the constructor `IPyExperiments()` assigning to the same experiment object, will trigger a destructor first. This will delete the local vars created until that point, reclaim memory and the previous experiment's stats will be printed first.
 
+5. Context manager is supported:
+
+   ```python
+   with IPyExperiments():
+       x1 = consume_cpu(2**14)
+       x2 = consume_gpu(2**14)
+   ```
+   except, it won't be very useful if you want to use more than one notebook cell.
+
+   If you need to access the object use:
+
+   ```python
+   with IPyExperiments() as exp:
+       x1 = consume_cpu(2**14)
+       x2 = consume_gpu(2**14)
+       exp.keep_var_names('x1')
+   ```
+
 Please refer to the [demo notebook](https://github.com/stas00/ipyexperiments/blob/master/demo.ipynb) to see this API in action.
 
 ## Contributing
