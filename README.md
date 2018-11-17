@@ -38,7 +38,7 @@ pip install git+https://github.com/stas00/ipyexperiments.git
    ```python
    consumed, reclaimed, available = exp1.get_stats()
    ```
-   3 dictionaries are returned. This way is used so that in the future new entries could be added w/o breaking the API.
+   3 dictionaries are returned. This way is used so that in the future new entries could be added w/o breaking the API. The memory stats are in bytes.
 
    ```python
    print(consumed, reclaimed, available)
