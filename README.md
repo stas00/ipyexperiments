@@ -34,6 +34,9 @@ cell 8: del exp2
 ## Installation
 pip install git+https://github.com/stas00/ipyexperiments.git
 
+* pip package is easy to add - waiting to hear from you if you think the module should be called differently.
+* conda package isn't coming yet - need to find a gpu query module first that has a conda package! so far any of the modules have only pip packages available. I have compiled the ones I am aware of so far [here](https://docs.fast.ai/dev/gpu.html#accessing-nvidia-gpu-info-programmatically). If you know of others please let me know.
+
 ## API
 
 1. Create an experiment object:
@@ -64,3 +67,7 @@ pip install git+https://github.com/stas00/ipyexperiments.git
    del exp1
    ```
    If you re-run the experiment without either calling `exp1.finish()` or `del exp1`, e.g. if you decided to abort it half-way to the end, or say you hit "cuda: out of memory" error, then re-running the constructor `IPyExperiments()` assigning to the same experiment object, will trigger a destructor first. This will delete the local vars created until that point, reclaim memory and the previous experiment's stats will be printed first.
+   
+## Contributing
+
+PRs with improvements and new features and Issues with suggestions are welcome.
