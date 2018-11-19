@@ -85,7 +85,7 @@ pip install git+https://github.com/stas00/ipyexperiments.git
    ```
    except, it won't be very useful if you want to use more than one notebook cell.
 
-   If you need to access the object use:
+   If you need to access the experiment object use:
 
    ```python
    with IPyExperiments() as exp:
