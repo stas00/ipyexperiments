@@ -9,13 +9,13 @@ Using this framework you can run multiple consequent experiments without needing
 
 As an extra bonus you get access to the memory consumption data, so you can use it to automate the discovery of the parameters to suit your hardware's unique memory limits.
 
-The idea behind this module is very simple - let's implement a function-like functionality, where its local variables get destroyed at the end of its run, giving us memory back, except it'll work across multiple jupyter notebook cells (or ipython). In addition it also run `gc.collect()` to immediately release badly behaved variables with circular references, and reclaim general and GPU RAM. The latter also happens to help discover memory leaks.
+The idea behind this module is very simple - let's implement a function-like functionality, where its local variables get destroyed at the end of its run, giving us memory back, except it'll work across multiple jupyter notebook cells (or ipython). In addition it also runs `gc.collect()` to immediately release badly behaved variables with circular references, and reclaim general and GPU RAM. It also helps to discover memory leaks.
 
-XXX: This is a prototype and it currently assumes you use `pytorch` so it doesn't require it (since currently `pytorch` is in pre-release stage), so I assume you already have it installed. This will change though and it'll become optional, other deeplearning frameworks can be deployed too.
+XXX: This is a prototype and it currently assumes you use `pytorch` so it doesn't have it specified in the dependencies list (since currently `pytorch-1.0` is in pre-release stage), so I assume you already have it installed. This will change though and it'll become optional, other deeplearning frameworks can be deployed too.
 
 ## Usage
 
-Here is an example with using code from the [`fastai`](https://github.com/fastai/fastai) library. I added a visual leading space to demonstrate the idea, but of course it won't be valid python.
+Here is an example with using code from the [`fastai`](https://github.com/fastai/fastai) library. I added a visual leading space to demonstrate the idea, but, of course, it won't be valid python.
 
 ```
 cell 1: exp1 = IPyExperiments()
@@ -30,13 +30,13 @@ cell 8: del exp2
 
 ## Demo
 
-The easiest way to see how this work is to read the [demo notebook](https://github.com/stas00/ipyexperiments/blob/master/demo.ipynb).
+The easiest way to see how this framework works is to read the [demo notebook](https://github.com/stas00/ipyexperiments/blob/master/demo.ipynb).
 
 ## Installation
 pip install git+https://github.com/stas00/ipyexperiments.git
 
-* pip package is easy to add - waiting to hear from you if you think the module should be called differently.
-* conda package isn't coming yet - need to find a gpu query module first that has a conda package! so far any of the modules have only pip packages available. I have compiled the ones I am aware of so far [here](https://docs.fast.ai/dev/gpu.html#accessing-nvidia-gpu-info-programmatically). If you know of others please let me know.
+* pip package is easy to add - this module is a few days old - waiting to hear from you if you think the module should be called differently.
+* conda package isn't coming yet - need to find a gpu query module first that has a conda package it can depend on! So far any of the modules I found that do that have only pypi packages available. I have compiled the ones I am aware of so far [here](https://docs.fast.ai/dev/gpu.html#accessing-nvidia-gpu-info-programmatically). If you know of others please let me know.
 
 ## API
 
