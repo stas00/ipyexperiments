@@ -4,24 +4,37 @@ import gc, os, time, psutil
 from IPython import get_ipython
 from IPython.core.magics.namespace import NamespaceMagics # Used to query namespace.
 
-# XXX: gputil (is not on conda!)
+# XXX: nvidia-ml-py3 (is not on conda!)
+import pynvml # nvidia-ml-py3
+pynvml.nvmlInit()
 
 # XXX: for now hardcoding torch dependency, but it should be optional
-import torch
-
-import humanize
-hs = humanize.naturalsize
-
-import GPUtil as GPU
-GPUs = GPU.getGPUs()
-# gpu = GPUs[0] # XXX: gputil doesn't seem to be great as it seems to cache values?
+import torch, torch.cuda
 
 process = psutil.Process(os.getpid())
 
-# XXX: there could be more than one GPU (or none!)
-# XXX: use pytorch to get current gpu if any
-# XXX: it seems that I have to call this function every time before a change in the memory consumption of the card, otherwise it gives me old data! i.e. can't cache this object
-def get_gpu(): return (GPU.getGPUs())[0]
+# light weight humanize from https://stackoverflow.com/a/35982790/9201239 w/ tweaks
+def hs(value, fraction_point=1):
+    powers = [10 ** x for x in (12, 9, 6, 3, 0)]
+    human_powers = ('TB', 'GB', 'MB', 'KB', 'B')
+    is_negative = False
+    if not isinstance(value, float):  value = float(value)
+    if value < 0: is_negative = True; value = abs(value)
+    return_value = "0 B"
+    for i, p in enumerate(powers):
+        if value >= p:
+            return_value = str(round(value / (p / (10.0 ** fraction_point))) /
+                               (10 ** fraction_point)) + " " + human_powers[i]
+            break
+    if is_negative: return_value = "-" + return_value
+    return return_value
+
+def get_gpu_ram():
+    """ for the currently selected GPU device return: total, free and used RAM in bytes """
+    id = torch.cuda.current_device()
+    handle = pynvml.nvmlDeviceGetHandleByIndex(id)
+    info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+    return info.total, info.free, info.used
 
 class IPyExperiments():
     "Create an experiment with time/memory checkpoint"
@@ -69,8 +82,8 @@ class IPyExperiments():
 
     def _gen_ram_used(self):  return int(process.memory_info().rss)
     def _gen_ram_avail(self): return int(psutil.virtual_memory().available)
-    def _gpu_ram_used(self):  return int(get_gpu().memoryUsed*1024**2)
-    def _gpu_ram_avail(self): return int(get_gpu().memoryFree*1024**2)
+    def _gpu_ram_used(self):  return get_gpu_ram()[2]
+    def _gpu_ram_avail(self): return get_gpu_ram()[1]
     def _available(self):     return self._gen_ram_avail(), self._gpu_ram_avail()
 
     def _consumed(self):
@@ -107,12 +120,11 @@ class IPyExperiments():
         """ Print memory stats (not exact due to pytorch memory caching) """
         print("\n*** Current state:")
         print("Gen RAM Free {0:>7s} | Proc size {1}".format(
-            hs(self._gen_ram_avail()),
-            hs(self._gen_ram_used())))
-        gpu = get_gpu()
+            hs(self._gen_ram_avail()), hs(self._gen_ram_used())))
+        gpu_ram_total, gpu_ram_free, gpu_ram_used = get_gpu_ram()
+        gpu_ram_util = gpu_ram_used/gpu_ram_free*100 if gpu_ram_free else 100
         print("GPU RAM Free {0:>7s} | Used {1} | Util {2:2.1f}% | Total {3}".format(
-            hs(gpu.memoryFree*1024**2), hs(gpu.memoryUsed*1024**2),
-            gpu.memoryUtil*100, hs(gpu.memoryTotal*1024**2)))
+            hs(gpu_ram_free), hs(gpu_ram_used), gpu_ram_util, hs(gpu_ram_total)))
 
     def finish(self):
         """ Finish the experiment, reclaim memory, return final stats """

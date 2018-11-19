@@ -8,8 +8,7 @@ def to_list(buffer): return list(filter(None, map(str.strip, buffer.splitlines()
 
 requirements = to_list("""
   ipython
-  gputil
-  humanize
+  nvidia-ml-py3
   psutil
 """)
 setup_requirements = [ ]
