@@ -88,7 +88,7 @@ pip install git+https://github.com/stas00/ipyexperiments.git
 
 3. Save specific local variables to be accessible after the experiment is finished and the rest of the local variables have been deleted.
 
-  ```python
+   ```python
    exp3.keep_var_names('consumed', 'reclaimed', 'available')
    ```
    Note, that you need to pass the names of the variables and not the variables themselves.
