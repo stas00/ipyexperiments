@@ -96,6 +96,21 @@ pip install git+https://github.com/stas00/ipyexperiments.git
 
 Please refer to the [demo notebook](https://github.com/stas00/ipyexperiments/blob/master/demo.ipynb) to see this API in action.
 
+
+## Framework Preloading and Memory Leak Detection
+
+If you haven't asked for any local variables to be saved via `keep_var_names()` and if the process finished with big chunks of memory un-reclaimed - guess what - most likely you have just discovered a memory leak in your code. If all the local variables/objects were destroyed you should normally get all of the general and GPU RAM reclaimed in a well-behaved code.
+
+You do need to be aware that some frameworks consume a big chunk of general and GPU RAM on load. For example `pytorch` `cuda` [eats up](
+https://docs.fast.ai/dev/gpu.html#unusable-gpu-ram-per-process) about 0.5GB of GPU RAM and 2GB of general RAM on load (not necessarity on `import`), so if your experiment started with doing a `cuda` action for the first time in a given process, expect to lose that much RAM - this one can't be reclaimed. Therefore to get a real check for leaked memory, preload `cuda` before you do the experiment, e.g.:
+
+   ```python
+   import pytorch
+   z = torch.ones((1, 1)).cuda() # preload pytorch with cuda libraries
+   exp1 = IPyExperiments()
+   ... # your experiment here
+   ```
+
 ## Contributing
 
 PRs with improvements and new features and Issues with suggestions are welcome.
