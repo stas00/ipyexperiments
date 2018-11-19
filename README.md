@@ -1,5 +1,6 @@
 # ipyexperiments
-experiment containers for jupyter/ipython for GPU and general RAM re-use
+
+Experiment containers for jupyter/ipython for GPU and general RAM re-use
 
 # About
 
@@ -9,17 +10,17 @@ Using this framework you can run multiple consequent experiments without needing
 
 As an extra bonus you get access to the memory consumption data, so you can use it to automate the discovery of the parameters to suit your hardware's unique memory limits.
 
-The idea behind this module is very simple - let's implement a function-like functionality, where its local variables get destroyed at the end of its run, giving us memory back, except it'll work across multiple jupyter notebook cells (or ipython). In addition it also runs `gc.collect()` to immediately release badly behaved variables with circular references, and reclaim general and GPU RAM. It also helps to discover memory leaks.
-
-XXX: This is a prototype and it currently assumes you use `pytorch` so it doesn't have it specified in the dependencies list (since currently `pytorch-1.0` is in pre-release stage), so I assume you already have it installed. This will change though and it'll become optional, other deeplearning frameworks can be deployed too.
+The idea behind this module is very simple - it implements a python function-like functionality, where its local variables get destroyed at the end of its run, giving us memory back, except it'll work across multiple jupyter notebook cells (or ipython). In addition it also runs `gc.collect()` to immediately release badly behaved variables with circular references, and reclaim general and GPU RAM. It also helps to discover memory leaks, and doesn't various other useful things behind the scenes.
 
 ## Usage
 
-Here is an example with using code from the [`fastai`](https://github.com/fastai/fastai) library. I added a visual leading space to demonstrate the idea, but, of course, it won't be valid python.
+Here is an example with using code from the [`fastai`](https://github.com/fastai/fastai) library.
+
+Please, note, that I added a visual leading space to demonstrate the idea, but, of course, it won't be a valid python code.
 
 ```
 cell 1: exp1 = IPyExperiments()
-cell 2:   learn1 = language_model_learner(data_lm, bptt=70, drop_mult=0.3, pretrained_model=URLs.WT103)
+cell 2:   learn1 = language_model_learner(data_lm, bptt=60, drop_mult=0.25, pretrained_model=URLs.WT103)
 cell 3:   learn1.lr_find()
 cell 4: del exp1
 cell 5: exp2 = IPyExperiments()
@@ -32,11 +33,34 @@ cell 8: del exp2
 
 The easiest way to see how this framework works is to read the [demo notebook](https://github.com/stas00/ipyexperiments/blob/master/demo.ipynb).
 
+## Backends
+
+Backends allow experimentation with different GPU frameworks, like `pytorch`, `tensorflow`, etc.
+
+Currently `cpu` and `pytorch` backends are supported. `pytorch` is the default backend, it'll be used if you don't specify any other.
+
+If you don't have a GPU or if you have it, but you don't use it for the experiment, you can initiate:
+
+   ```python
+   exp1 = IPyExperiments(backend='cpu')
+   ```
+
+Additional machine learning backends can be easily supported. Just submit a PR after adding a few lines of code in `backend_load()` to support the backend you desire. The description of what's needed is in the comments of that method - it should be very easy to do.
+
+Please, note, that this module doesn't setup its `pip`/`conda` dependencies for the backend frameworks, since you must have already installed those before attempting to use this module.
+
+## Multiple GPUs
+
+This framework currently works with the GPU that is currently selected by the backend. For most users it'll be `id=0`. If you instructed your backend (e.g. `pytorch`) to use a different GPU, `IPyExperiments` will know to use that GPU instead. For example, with the `pytorch` backed, it's discovered with: `torch.cuda.current_device()`.
+
+It can be extended to support multiple-GPUs concurrently, but I have only one GPU at the moment, so you are welcome to submit PRs supporting stats for multiple GPUs at the same time.
+
+
 ## Installation
 pip install git+https://github.com/stas00/ipyexperiments.git
 
 * pip package is easy to add - this module is a few days old - waiting to hear from you if you think the module should be called differently.
-* conda package isn't coming yet - need to find a gpu query module first that has a conda package it can depend on! So far any of the modules I found that do that have only pypi packages available. I have compiled the ones I am aware of so far [here](https://docs.fast.ai/dev/gpu.html#accessing-nvidia-gpu-info-programmatically). If you know of others please let me know.
+* conda package - same as pip
 
 ## API
 
@@ -44,6 +68,11 @@ pip install git+https://github.com/stas00/ipyexperiments.git
    ```python
    exp1 = IPyExperiments()
    ```
+   By default, the `pytorch` backend is used. You can change that to load a `cpu`-only mode, with:
+   ```python
+   exp1 = IPyExperiments('cpu')
+   ```
+   More backends will be supported in the future.
 
 2. Get intermediary experiment usage stats:
    ```python
@@ -101,14 +130,14 @@ Please refer to the [demo notebook](https://github.com/stas00/ipyexperiments/blo
 
 If you haven't asked for any local variables to be saved via `keep_var_names()` and if the process finished with big chunks of memory un-reclaimed - guess what - most likely you have just discovered a memory leak in your code. If all the local variables/objects were destroyed you should normally get all of the general and GPU RAM reclaimed in a well-behaved code.
 
-You do need to be aware that some frameworks consume a big chunk of general and GPU RAM on load. For example `pytorch` `cuda` [eats up](
-https://docs.fast.ai/dev/gpu.html#unusable-gpu-ram-per-process) about 0.5GB of GPU RAM and 2GB of general RAM on load (not necessarity on `import`), so if your experiment started with doing a `cuda` action for the first time in a given process, expect to lose that much RAM - this one can't be reclaimed. Therefore to get a real check for leaked memory, preload `cuda` before you do the experiment, e.g.:
+You do need to be aware that some frameworks consume a big chunk of general and GPU RAM when they are used for the first time. For example `pytorch` `cuda` [eats up](
+https://docs.fast.ai/dev/gpu.html#unusable-gpu-ram-per-process) about 0.5GB of GPU RAM and 2GB of general RAM on load (not necessarity on `import`), so if your experiment started with doing a `cuda` action for the first time in a given process, expect to lose that much RAM - this one can't be reclaimed.
+
+But `IPyExperiments` does all this for you, for example, preloading `pytorch` `cuda` if the `pytorch` backend (default) is used. During the preloading it internally does:
 
    ```python
    import pytorch
-   z = torch.ones((1, 1)).cuda() # preload pytorch with cuda libraries
-   exp1 = IPyExperiments()
-   ... # your experiment here
+   torch.ones((1, 1)).cuda() # preload pytorch with cuda libraries
    ```
 
 ## Contributing
