@@ -26,7 +26,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ],
-    description="Experiment containers for jupyter/ipython for GPU and general RAM re-use\",
+    description="Experiment containers for jupyter/ipython for GPU and general RAM re-use",
     install_requires=requirements,
     license="Apache Software License 2.0",
     long_description=readme,
