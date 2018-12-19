@@ -57,10 +57,23 @@ It can be extended to support multiple-GPUs concurrently, but I have only one GP
 
 
 ## Installation
-pip install git+https://github.com/stas00/ipyexperiments.git
 
-* pip package is easy to add - this module is a few days old - waiting to hear from you if you think the module should be called differently.
-* conda package - same as pip
+* pypi:
+
+   ```
+   pip install ipyexperiments
+   ```
+* conda:
+
+   ```
+   conda install -c fastai -c stason ipyexperiments
+   ```
+
+* dev:
+
+   ```
+   pip install git+https://github.com/stas00/ipyexperiments.git
+   ```
 
 ## API
 
