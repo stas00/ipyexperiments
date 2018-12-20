@@ -1,8 +1,8 @@
 # ipyexperiments
 
-Experiment containers for jupyter/ipython for GPU and general RAM re-use
+jupyter/ipython experiment containers for GPU and general RAM re-use.
 
-# About
+## About
 
 This module's main purpose is to help calibrate hyper parameters in deep learning notebooks to fit the available GPU and General RAM, but, of course, it can be useful for any other use where memory limits is a constant issue.
 
@@ -11,6 +11,26 @@ Using this framework you can run multiple consequent experiments without needing
 As an extra bonus you get access to the memory consumption data, so you can use it to automate the discovery of the hyper parameters to suit your hardware's unique memory limits.
 
 The idea behind this module is very simple - it implements a python function-like functionality, where its local variables get destroyed at the end of its run, giving us memory back, except it'll work across multiple jupyter notebook cells (or ipython). In addition it also runs `gc.collect()` to immediately release badly behaved variables with circular references, and reclaim general and GPU RAM. It also helps to discover memory leaks, and performs various other useful things behind the scenes.
+
+
+## Installation
+
+* pypi:
+
+   ```
+   pip install ipyexperiments
+   ```
+* conda:
+
+   ```
+   conda install -c fastai -c stason ipyexperiments
+   ```
+
+* dev:
+
+   ```
+   pip install git+https://github.com/stas00/ipyexperiments.git
+   ```
 
 ## Usage
 
@@ -54,26 +74,6 @@ Please, note, that this module doesn't setup its `pip`/`conda` dependencies for 
 This framework currently works with the GPU that is currently selected by the backend. For most users it'll be `id=0`. If you instructed your backend (e.g. `pytorch`) to use a different GPU, `IPyExperiments` will know to use that GPU instead. For example, with the `pytorch` backed, it's discovered with: `torch.cuda.current_device()`.
 
 It can be extended to support multiple-GPUs concurrently, but I have only one GPU at the moment, so you are welcome to submit PRs supporting stats for multiple GPUs at the same time.
-
-
-## Installation
-
-* pypi:
-
-   ```
-   pip install ipyexperiments
-   ```
-* conda:
-
-   ```
-   conda install -c fastai -c stason ipyexperiments
-   ```
-
-* dev:
-
-   ```
-   pip install git+https://github.com/stas00/ipyexperiments.git
-   ```
 
 ## API
 
@@ -144,7 +144,7 @@ Please refer to the [demo notebook](https://github.com/stas00/ipyexperiments/blo
 If you haven't asked for any local variables to be saved via `keep_var_names()` and if the process finished with big chunks of memory un-reclaimed - guess what - most likely you have just discovered a memory leak in your code. If all the local variables/objects were destroyed you should normally get all of the general and GPU RAM reclaimed in a well-behaved code.
 
 You do need to be aware that some frameworks consume a big chunk of general and GPU RAM when they are used for the first time. For example `pytorch` `cuda` [eats up](
-https://docs.fast.ai/dev/gpu.html#unusable-gpu-ram-per-process) about 0.5GB of GPU RAM and 2GB of general RAM on load (not necessarity on `import`), so if your experiment started with doing a `cuda` action for the first time in a given process, expect to lose that much RAM - this one can't be reclaimed.
+https://docs.fast.ai/dev/gpu.html#unusable-gpu-ram-per-process) about 0.5GB of GPU RAM and 2GB of general RAM on load (not necessarily on `import`, but usually later when it's used), so if your experiment started with doing a `cuda` action for the first time in a given process, expect to lose that much RAM - this one can't be reclaimed.
 
 But `IPyExperiments` does all this for you, for example, preloading `pytorch` `cuda` if the `pytorch` backend (default) is used. During the preloading it internally does:
 
@@ -156,3 +156,5 @@ But `IPyExperiments` does all this for you, for example, preloading `pytorch` `c
 ## Contributing
 
 PRs with improvements and new features and Issues with suggestions are welcome.
+
+If you work with `tensorflow`, please, consider sending a PR to support it - by mimicking the `pytorch`-backend implementation.
