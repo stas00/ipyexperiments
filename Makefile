@@ -132,7 +132,7 @@ install: clean ## install the package to the active python's site-packages
 	python setup.py install
 
 test: ## run tests with the default python
-	python setup.py --quiet test
+	pytest
 
 tools-update: ## install/update build tools
 	@echo "\n\n*** Updating build tools"

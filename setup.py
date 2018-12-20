@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 # note: version is maintained inside fastai/version.py
 exec(open('ipyexperiments/version.py').read())
 
-with open('README.md') as readme_file: readme = readme_file.read()
+with open("README.md", "r") as fh: long_description = fh.read()
 
 def to_list(buffer): return list(filter(None, map(str.strip, buffer.splitlines())))
 
@@ -17,7 +17,10 @@ requirements = to_list("""
 
 setup_requirements = ['pytest-runner']
 
-test_requirements = ['pytest']
+test_requirements = to_list("""
+  pytest
+  pytest-ipynb
+""")
 
 setup(
     name = 'ipyexperiments',
@@ -36,7 +39,7 @@ setup(
     license = "Apache License 2.0",
 
     description = "jupyter/ipython experiment containers for GPU and general RAM re-use",
-    long_description = readme,
+    long_description = long_description,
     url = 'https://github.com/stas00/ipyexperiments',
     keywords = 'ipyexperiments, jupyter, ipython, memory, gpu',
 
