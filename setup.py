@@ -1,8 +1,6 @@
-#!/usr/bin/env python
-
 from setuptools import setup, find_packages
 
-# note: version is maintained inside fastai/version.py
+# note: version is maintained inside ipyexperiments/version.py
 exec(open('ipyexperiments/version.py').read())
 
 with open("README.md", "r") as fh: long_description = fh.read()
@@ -40,6 +38,7 @@ setup(
 
     description = "jupyter/ipython experiment containers for GPU and general RAM re-use",
     long_description = long_description,
+    long_description_content_type = "text/markdown",
     url = 'https://github.com/stas00/ipyexperiments',
     keywords = 'ipyexperiments, jupyter, ipython, memory, gpu',
 
