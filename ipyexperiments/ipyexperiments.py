@@ -11,21 +11,12 @@ except Exception as e:
 
 process = psutil.Process(os.getpid())
 
-# light weight humanize from https://stackoverflow.com/a/35982790/9201239 w/ tweaks
-def hs(value, fraction_point=1):
-    powers = [10 ** x for x in (12, 9, 6, 3, 0)]
-    human_powers = ('TB', 'GB', 'MB', 'KB', 'B')
-    is_negative = False
-    if not isinstance(value, float):  value = float(value)
-    if value < 0: is_negative = True; value = abs(value)
-    return_value = "0 B"
-    for i, p in enumerate(powers):
-        if value >= p:
-            return_value = str(round(value / (p / (10.0 ** fraction_point))) /
-                               (10 ** fraction_point)) + " " + human_powers[i]
-            break
-    if is_negative: return_value = "-" + return_value
-    return return_value
+# light weight humanize from https://stackoverflow.com/a/1094933/9201239 w/ tweaks
+def hs(num, suffix='B'):
+    for unit in ['','K','M','G','T','P','E','Z']:
+        if abs(num) < 1024.0: return "%3.1f %s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f %s%s" % (num, 'Y', suffix)
 
 def gen_ram_used():  return int(process.memory_info().rss)
 def gen_ram_avail(): return int(psutil.virtual_memory().available)
