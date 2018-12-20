@@ -7,7 +7,7 @@
 
 # ipyexperiments
 
-jupyter/ipython experiment containers for GPU and general RAM re-use.
+jupyter/ipython experiment containers for GPU and general RAM re-use and memory leaks detection.
 
 ## About
 
