@@ -112,7 +112,7 @@ dist-conda: clean-conda ## build conda package
 	conda-build ./conda/ -c fastai --output-folder conda-dist
 	ls -l conda-dist/noarch/*tar.bz2
 
-upload-conda: dist-conda ## release conda package
+upload-conda: ## release conda package
 	@echo "\n\n*** Uploading" conda-dist/noarch/*tar.bz2 "to stason@anaconda.org\n"
 	anaconda upload conda-dist/noarch/*tar.bz2 -u stason
 
