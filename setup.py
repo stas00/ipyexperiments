@@ -36,7 +36,7 @@ setup(
 
     license = "Apache License 2.0",
 
-    description = "jupyter/ipython experiment containers for GPU and general RAM re-use",
+    description = "jupyter/ipython experiment containers for GPU and general RAM re-use and memory leaks detection.",
     long_description = long_description,
     long_description_content_type = "text/markdown",
     url = 'https://github.com/stas00/ipyexperiments',
