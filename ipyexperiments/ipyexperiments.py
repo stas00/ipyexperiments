@@ -58,13 +58,17 @@ class IPyExperiments():
         ipython = get_ipython()
         self.namespace = NamespaceMagics()
         self.namespace.shell = ipython.kernel.shell
+        self.var_names_start = self.get_var_names()
+        #print(self.var_names_start)
+
+        # The following doesn't work:
+        #
         # we have to take a snapshot of all the variables and their references,
         # so that when the experiment is over we can discover which variables were
         # used in the scope of the experiment, including ones that were defined
         # prior to the experiment (which would otherwise be missed if only
         # variables names before and after are compared).
-        self.var_names_start = self.get_var_names()
-        self.var_start = {k:self.namespace.shell.user_ns[k] for k in self.var_names_start}
+        #self.var_start = {k:self.namespace.shell.user_ns[k] for k in self.var_names_start}
 
         self.gen_ram_used_start = gen_ram_used()
         self.gpu_ram_used_start = gpu_ram_used()
@@ -193,18 +197,22 @@ class IPyExperiments():
         var_names_cur = self.get_var_names()
         #print(var_names_cur)
 
+        # XXX: this doesn't work, since some variables get modified during the
+        # experiment, but indirectly and therefore shouldn't be deleted.
+        # So the idea of comparing values before and after doesn't quite work.
+        #
         # only newly introduced variables, or variables that have been re-used
-        changed_vars = [k for k in var_names_cur
-                    if not (k in self.var_start and self.namespace.shell.user_ns[k] is self.var_start[k])]
+        # changed_vars = [k for k in var_names_cur
+        #            if not (k in self.var_start and self.namespace.shell.user_ns[k] is self.var_start[k])]
 
-        # extract the var names added/used during the experiment and delete
+        # extract the var names added during the experiment and delete
         # them, with the exception of those we were told to preserve
-        var_names_new = list(set(changed_vars) - set(self.var_names_keep))
-        print("\n*** Deleting the following variables:")
+        var_names_new = list(set(var_names_cur) - set(self.var_names_start) - set(self.var_names_keep))
+        print("\n*** Deleting the following local variables:")
         print(sorted(var_names_new))
         for x in var_names_new: self.namespace.xdel(x)
         if self.var_names_keep:
-            print("\n*** Keeping the following variables:")
+            print("\n*** Keeping the following local variables:")
             print(sorted(self.var_names_keep))
 
         # cleanup and reclamation

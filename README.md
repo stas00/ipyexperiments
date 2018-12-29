@@ -166,9 +166,13 @@ But `IPyExperiments` does all this for you, for example, preloading `pytorch` `c
 
 ## Caveats
 
-Do pay attention to the variables being deleted at the end of the experiments and potentially deleting variables with the same name that were defined before the experiment.
+The module only deletes newly defined local variables. i.e. those that didn't exist before the experiment started and were created after it has started.
 
-It's the best to use unique variable names inside experiments, compared to code outside of experiments, because if you do this:
+Due to the nature of access to `ipython`'s local variable list (there is just the list of names), there is no way of telling whether a certain variable has been redefined inside the scope of the experiment. The current algorithm compares the list of local variables before the experiment, and after it - and that's how it knows which ones should be deleted and their memory reclaimed.
+
+I tried to solve this by tracking variables that changed, presumably those would be the ones reused inside the experiment, which mostly worked, but unfortunately it was incorrectly deleting some variables that were not introduced by an experiment, but happened to be modified through some function called during the experiment. Also it failed if the variable was assigned the same value as before the experiment (since there was no change in its value).
+
+So if you do this:
 
 ```
 # cell1
@@ -179,7 +183,15 @@ with IPyExperiments():
     x2 = 20
 ```
 
-your original `x1` will be gone at the end of the experiment, so if you go back up to `cell1` and try to use `x1` python won't know of it.
+only `x2` will be deleted at the end of the experiment, as there is no certain way to programmatically tell whether the local variable `x1` was introduced during the experiment or before it.
+
+Watch the printout when the experiment completes to ensure all the desired variables get removed. For example in the example above we would get:
+```
+*** Deleting the following local variables:
+['x2']
+```
+
+To work around this problem use unique variable names inside experiments, as compared to variables in code outside of experiments.
 
 It's perfectly fine though to use the same variable names across different experiments:
 ```
@@ -192,21 +204,9 @@ with IPyExperiments():
     x1 = 100
     x2 = 200
 ```
-as long as you don't hop from one experiment to another without completing the first one first. It won't be a problem in this example where the experiment is contained to a single cell, but I'm referring to the more common situation, where it's spread out across many cells.
+as long as you don't hop from one experiment to another without completing the first one first. It won't be a problem in this example where the experiment is contained to a single cell, but I'm referring to the more common situation, where it's spread out across many cells. Once an experiment is completed and its local vars get deleted, they can be safely defined again in another experiment.
 
-Unfortunately the following situation I don't currently know how to resolve:
-
-```
-# cell1
-x1 = 1
-# cell 2
-with IPyExperiments():
-    x1 = 1
-    x2 = 20
-```
-Here `x1` won't get deleted, since it has the same value at the end of the experiment as it had before the experiment, so we can't tell the whether it was created before the experiment or during it (the algorithm checks for new variables, and variables that have changed).
-
-In general this shouldn't be a problem, since we are after large objects, which would be different if created during the experiment as compared to single numbers or strings. But, it makes this module imperfect. If you have ideas on how to resolve this, I'm all ears.
+If you have some brilliant insights on how to resolve this conundrum I'm all ears.
 
 
 ## Contributing
