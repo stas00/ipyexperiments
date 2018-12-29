@@ -200,3 +200,7 @@ as long as you don't hop from one experiment to another without completing the f
 PRs with improvements and new features and Issues with suggestions are welcome.
 
 If you work with `tensorflow`, please, consider sending a PR to support it - by mimicking the `pytorch`-backend implementation.
+
+## History
+
+A detailed history of changes can be found [here](https://github.com/stas00/ipyexperiments/blob/master/CHANGES.md).

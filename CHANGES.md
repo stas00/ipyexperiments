@@ -1,14 +1,5 @@
 # Changes
 
-## 1.0.40.dev0 (Work In Progress)
-
-### New:
-
-### Changed:
-
-### Fixed:
-
-
 
 ## 0.1.4 (2018-12-28)
 
