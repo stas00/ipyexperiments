@@ -194,6 +194,20 @@ with IPyExperiments():
 ```
 as long as you don't hop from one experiment to another without completing the first one first. It won't be a problem in this example where the experiment is contained to a single cell, but I'm referring to the more common situation, where it's spread out across many cells.
 
+Unfortunately the following situation I don't currently know how to resolve:
+
+```
+# cell1
+x1 = 1
+# cell 2
+with IPyExperiments():
+    x1 = 1
+    x2 = 20
+```
+Here `x1` won't get deleted, since it has the same value at the end of the experiment as it had before the experiment, so we can't tell the whether it was created before the experiment or during it (the algorithm checks for new variables, and variables that have changed).
+
+In general this shouldn't be a problem, since we are after large objects, which would be different if created during the experiment as compared to single numbers or strings. But, it makes this module imperfect. If you have ideas on how to resolve this, I'm all ears.
+
 
 ## Contributing
 
