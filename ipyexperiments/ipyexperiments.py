@@ -219,10 +219,10 @@ class IPyExperiments():
         collected = gc.collect()
         if collected:
             print("\n*** Circular ref objects gc collected during the experiment:")
-            print(f"cleared {collected} objects (no leakage)")
+            print(f"cleared {collected} objects (only temporary leakage)")
         if len(gc.garbage):
             print("\n*** Potential memory leaks during the experiment:")
-            print(f"leaked garbage of {len(gc.garbage)} objects")
+            print(f"uncollected gc.garbage of {len(gc.garbage)} objects")
         # now we can attempt to reclaim GPU memory
         gpu_clear_cache()
         self.reclaimed = True
