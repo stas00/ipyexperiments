@@ -164,6 +164,37 @@ But `IPyExperiments` does all this for you, for example, preloading `pytorch` `c
    torch.ones((1, 1)).cuda() # preload pytorch with cuda libraries
    ```
 
+## Caveats
+
+Do pay attention to the variables being deleted at the end of the experiments and potentially deleting variables with the same name that were defined before the experiment.
+
+It's the best to use unique variable names inside experiments, compared to code outside of experiments, because if you do this:
+
+```
+# cell1
+x1 = 1
+# cell 2
+with IPyExperiments():
+    x1 = 10
+    x2 = 20
+```
+
+your original `x1` will be gone at the end of the experiment, so if you go back up to `cell1` and try to use `x1` python won't know of it.
+
+It's perfectly fine though to use the same variable names across different experiments:
+```
+# cell1
+with IPyExperiments():
+    x1 = 10
+    x2 = 20
+# cell 2
+with IPyExperiments():
+    x1 = 100
+    x2 = 200
+```
+as long as you don't hop from one experiment to another without completing the first one first. It won't be a problem in this example where the experiment is contained to a single cell, but I'm referring to the more common situation, where it's spread out across many cells.
+
+
 ## Contributing
 
 PRs with improvements and new features and Issues with suggestions are welcome.

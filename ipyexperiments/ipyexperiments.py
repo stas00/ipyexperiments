@@ -58,8 +58,13 @@ class IPyExperiments():
         ipython = get_ipython()
         self.namespace = NamespaceMagics()
         self.namespace.shell = ipython.kernel.shell
+        # we have to take a snapshot of all the variables and their references,
+        # so that when the experiment is over we can discover which variables were
+        # used in the scope of the experiment, including ones that were defined
+        # prior to the experiment (which would otherwise be missed if only
+        # variables names before and after are compared).
         self.var_names_start = self.get_var_names()
-        #print(self.var_names_start)
+        self.var_start = {k:self.namespace.shell.user_ns[k] for k in self.var_names_start}
 
         self.gen_ram_used_start = gen_ram_used()
         self.gpu_ram_used_start = gpu_ram_used()
@@ -188,22 +193,28 @@ class IPyExperiments():
         var_names_cur = self.get_var_names()
         #print(var_names_cur)
 
-        # extract the var names added during the experiment and delete
+        # only newly introduced variables, or variables that have been re-used
+        changed_vars = [k for k in var_names_cur
+                    if not (k in self.var_start and self.namespace.shell.user_ns[k] is self.var_start[k])]
+
+        # extract the var names added/used during the experiment and delete
         # them, with the exception of those we were told to preserve
-        var_names_new = list(set(var_names_cur) - set(self.var_names_start) - set(self.var_names_keep))
-        print("\n*** Deleting the following local variables:")
+        var_names_new = list(set(changed_vars) - set(self.var_names_keep))
+        print("\n*** Deleting the following variables:")
         print(sorted(var_names_new))
         for x in var_names_new: self.namespace.xdel(x)
         if self.var_names_keep:
-            print("\n*** Keeping the following local variables:")
+            print("\n*** Keeping the following variables:")
             print(sorted(self.var_names_keep))
 
         # cleanup and reclamation
         collected = gc.collect()
-        if collected or len(gc.garbage):
+        if collected:
+            print("\n*** Circular ref objects gc collected during the experiment:")
+            print(f"cleared {collected} objects (no leakage)")
+        if len(gc.garbage):
             print("\n*** Potential memory leaks during the experiment:")
-            if collected:       print(f"cleared {collected} objects")
-            if len(gc.garbage): print(f"leaked garbage of {len(gc.garbage)} objects")
+            print(f"leaked garbage of {len(gc.garbage)} objects")
         # now we can attempt to reclaim GPU memory
         gpu_clear_cache()
         self.reclaimed = True
