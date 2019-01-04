@@ -3,6 +3,7 @@
 ## 0.1.6
 
 - on backend loading report the ID, Name and Total RAM of the GPU
+- print_state now gives a better formatted, more detailed current state
 
 ### Breaking changes
 

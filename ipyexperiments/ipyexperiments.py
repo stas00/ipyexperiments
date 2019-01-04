@@ -115,14 +115,20 @@ class IPyExperiments():
     def print_state(self):
         """ Print memory stats (not exact due to pytorch memory caching) """
         print("\n*** Current state:")
-        print("CPU RAM Free {0:>7s} | Proc size {1}".format(
-            hs(self.cpu_ram_avail()), hs(self.cpu_ram_used())))
+
+        print(f"RAM:   Used      Free     Total    Util")
+
+        cpu_ram_free = self.cpu_ram_avail()
+        cpu_ram_used = self.cpu_ram_used()
+        cpu_ram_total = cpu_ram_free + cpu_ram_used
+        cpu_ram_util = cpu_ram_used/cpu_ram_free*100 if cpu_ram_free else 100
+        print(f"CPU: {hs(cpu_ram_used):>8s}  {hs(cpu_ram_free):>8s} {hs(cpu_ram_total):>8s} {cpu_ram_util:6.2f}% ")
         if self.backend == 'cpu': return
 
         gpu_ram_total, gpu_ram_free, gpu_ram_used = self.gpu_ram()
         gpu_ram_util = gpu_ram_used/gpu_ram_free*100 if gpu_ram_free else 100
-        print("GPU RAM Free {0:>7s} | Used {1} | Util {2:2.1f}% | Total {3}".format(
-            hs(gpu_ram_free), hs(gpu_ram_used), gpu_ram_util, hs(gpu_ram_total)))
+        print(f"GPU: {hs(gpu_ram_used):>8s}  {hs(gpu_ram_free):>8s} {hs(gpu_ram_total):>8s} {gpu_ram_util:6.2f}% ")
+
 
     def finish(self):
         """ Finish the experiment, reclaim memory, return final stats """
