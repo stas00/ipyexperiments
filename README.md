@@ -239,8 +239,8 @@ only `x2` will be deleted at the end of the experiment, as there is no certain w
 
 Watch the printout when the experiment completes to ensure all the desired variables get removed. For example in the example above we would get:
 ```
-*** Deleting the following local variables:
-['x2']
+*** Local variables:
+Deleted: x2
 ```
 
 To work around this problem use unique variable names inside experiments, as compared to variables in code outside of experiments.
