@@ -19,6 +19,7 @@ As an extra bonus you get access to the memory consumption data, so you can use 
 
 The idea behind this module is very simple - it implements a python function-like functionality, where its local variables get destroyed at the end of its run, giving us memory back, except it'll work across multiple jupyter notebook cells (or ipython). In addition it also runs `gc.collect()` to immediately release badly behaved variables with circular references, and reclaim general and GPU RAM. It also helps to discover memory leaks, and performs various other useful things behind the scenes.
 
+![Usage demo](docs/images/usage1.png)
 
 ## Installation
 
