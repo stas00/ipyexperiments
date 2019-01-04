@@ -1,5 +1,13 @@
 # Changes
 
+
+
+
+## 0.1.7.dev0 (Work In Progress)
+
+- 
+
+
 ## 0.1.6 (2019-01-04)
 
 - on GPU backend loading report the ID, Name and Total RAM of the selected GPU
