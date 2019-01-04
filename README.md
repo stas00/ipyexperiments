@@ -184,8 +184,8 @@ from ipyexperiments import IPyExperimentsPytorch
 
    ```python
    with IPyExperimentsPytorch():
-       x1 = consume_cpu(2**14)
-       x2 = consume_gpu(2**14)
+       x1 = consume_cpu_ram(2**14)
+       x2 = consume_gpu_ram(2**14)
    ```
    except, it won't be very useful if you want to use more than one notebook cell.
 
@@ -193,8 +193,8 @@ from ipyexperiments import IPyExperimentsPytorch
 
    ```python
    with IPyExperimentsPytorch() as exp:
-       x1 = consume_cpu(2**14)
-       x2 = consume_gpu(2**14)
+       x1 = consume_cpu_ram(2**14)
+       x2 = consume_gpu_ram(2**14)
        exp.keep_var_names('x1')
    ```
 
