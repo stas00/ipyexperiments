@@ -23,7 +23,6 @@ class IPyExperiments():
         """ Instantiate an object with parameters:
         """
 
-        print("\n*** Starting experiment...")
         self.running = True
         self.reclaimed = False
         self.start_time = time.time()
@@ -130,8 +129,10 @@ class IPyExperiments():
     def finish(self):
         """ Finish the experiment, reclaim memory, return final stats """
 
-        print("\n*** Finishing experiment...")
         self.running = False
+
+        elapsed_time = int(time.time() - self.start_time)
+        print(f"\n*** Experiment finished in {time.strftime('%H:%M:%S', time.gmtime(elapsed_time))} (elapsed wallclock time)")
 
         # first take the final snapshot of consumed resources
         cpu_ram_cons,  gpu_ram_cons = self._consumed()
@@ -153,12 +154,11 @@ class IPyExperiments():
         # extract the var names added during the experiment and delete
         # them, with the exception of those we were told to preserve
         var_names_new = list(set(var_names_cur) - set(self.var_names_start) - set(self.var_names_keep))
-        print("\n*** Deleting the following local variables:")
-        print(sorted(var_names_new))
+        print("\n*** Local variables:")
+        print("Deleted:", ", ".join(sorted(var_names_new)))
         for x in var_names_new: self.namespace.xdel(x)
         if self.var_names_keep:
-            print("\n*** Keeping the following local variables:")
-            print(sorted(self.var_names_keep))
+            print("Kept:   ", ", ".join(sorted(self.var_names_keep)))
 
         # cleanup and reclamation
         collected = gc.collect()
@@ -183,10 +183,6 @@ class IPyExperiments():
         print(    f"CPU: {hs(cpu_ram_cons):>8s} {hs(cpu_ram_recl):>8s} ({cpu_ram_pct*100:6.2f}%)")
         if self.backend != 'cpu':
             print(f"GPU: {hs(gpu_ram_cons):>8s} {hs(gpu_ram_recl):>8s} ({gpu_ram_pct*100:6.2f}%)")
-
-        elapsed_time = int(time.time() - self.start_time)
-        print("\n*** Elapsed wallclock time:")
-        print(f"{time.strftime('%H:%M:%S', time.gmtime(elapsed_time))}")
 
         self.print_state()
 
@@ -231,7 +227,7 @@ class IPyExperimentsCPU(IPyExperiments):
         super().backend_init()
         self.gpu_current_device_id = -1
         if self.__class__.__name__ == 'IPyExperimentsCPU':
-            print(f"Backend: CPU-only")
+            print("\n*** Experiment started with the CPU-only backend")
 
     #def start(self):
     #    #print("Starting IPyExperimentsCPU")
@@ -302,7 +298,7 @@ class IPyExperimentsPytorch(IPyExperimentsGPU):
 
     def backend_init(self):
         super().backend_init()
-        print(f"Backend: Pytorch")
+        print("\n*** Experiment started with the Pytorch backend")
 
         import torch
         self.torch = torch
