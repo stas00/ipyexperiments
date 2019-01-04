@@ -131,14 +131,15 @@ from ipyexperiments import IPyExperimentsPytorch
 
 2. Get experiment's data so far:
    ```python
-   # For IPyExperimentsCPU
+   exp1 = IPyExperimentsCPU()
    cpu_data = exp1.data
-   # IPyExperimentsPytorch
-   cpu_data, gpu_data = exp1.data
-   ```
-   `IPyExperimentsPytorch`'s `data` returns cpu data, and gpu data entries.   `IPyExperimentsCPU`'s `data` returns just cpu data entries.
 
-   The data objects are `IPyExperimentMemory` named tuples, so you can access them as a normal tuple or via its named accessors. The memory stats are in bytes.
+   exp2 = IPyExperimentsPytorch()
+   cpu_data, gpu_data = exp2.data
+   ```
+   `IPyExperimentsPytorch`'s `data` returns cpu data, and gpu data entries.   `IPyExperimentsCPU`'s `data` returns just cpu data.
+
+   The data objects are `IPyExperimentMemory` named tuples, so you can access them as a normal tuple or via its named accessors.
 
    ```python
    print(cpu_data, gpu_data)
@@ -155,6 +156,8 @@ from ipyexperiments import IPyExperimentsPytorch
    2147274752 0
    ```
    This method is useful for getting stats half-way through the experiment.
+
+   The memory data are in bytes, so that precise measurements can be made.
 
 3. Save specific local variables to be accessible after the experiment is finished and the rest of the local variables get deleted.
 
