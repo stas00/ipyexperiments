@@ -85,7 +85,7 @@ It can be extended to support multiple-GPUs concurrently, but I have only one GP
 ## API
 
 ```
-from ipyexperiments import *
+from ipyexperiments import IPyExperiments
 ```
 
 1. Create an experiment object:
