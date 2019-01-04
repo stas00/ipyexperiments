@@ -122,7 +122,11 @@ class IPyExperiments():
             torch.ones((1, 1)).cuda()
             gpu_current_device = torch.cuda.current_device
             gpu_clear_cache    = torch.cuda.empty_cache
-            _, _, _ = gpu_ram() # check that all is ready to go
+            id = gpu_current_device()
+            # check that all is ready to go, and we get the RAM info
+            gpu_ram_total, gpu_ram_free, gpu_ram_used = gpu_ram()
+
+            print(f"Device: ID {id}, {torch.cuda.get_device_name(id)} ({hs(gpu_ram_total)} RAM)")
             return
 
         raise ValueError(f"backend {backend} isn't yet supported; please submit a request at https://github.com/stas00/ipyexperiments/issues")

@@ -1,5 +1,8 @@
 # Changes
 
+## 0.1.6
+
+- on backend loading report the ID, Name and Total RAM of the GPU
 
 ## 0.1.5 (2018-12-28)
 
