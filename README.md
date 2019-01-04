@@ -128,29 +128,50 @@ from ipyexperiments import IPyExperimentsPytorch
    ```
    More backends will be supported in the future.
 
-2. Get intermediary experiment usage stats:
+2. Get experiment's data so far:
    ```python
-   consumed, reclaimed, available = exp1.get_stats()
+   # For IPyExperimentsCPU
+   cpu_data = exp1.data
+   # IPyExperimentsPytorch
+   cpu_data, gpu_data = exp1.data
    ```
-   3 dictionaries are returned. This way is used so that in the future new entries could be added w/o breaking the API. The memory stats are in bytes.
+   `IPyExperimentsPytorch`'s `data` returns cpu data, and gpu data entries.   `IPyExperimentsCPU`'s `data` returns just cpu data entries.
+
+   The data objects are `IPyExperimentMemory` named tuples, so you can access them as a normal tuple or via its named accessors. The memory stats are in bytes.
 
    ```python
-   print(consumed, reclaimed, available)
-   {'gen_ram': 2147500032, 'gpu_ram': 0} {'gen_ram': 0, 'gpu_ram': 0} {'gen_ram': 9921957888, 'gpu_ram': 7487881216}
+   print(cpu_data, gpu_data)
+   ```
+   prints:
+   ```
+   IPyExperimentMemory(consumed=2147274752, reclaimed=0, available=15060738048) IPyExperimentMemory(consumed=0, reclaimed=0, available=6766002176)
+   ```
+   ```python
+   print(cpu_data.consumed, gpu_data.consumed)
+   ```
+   prints:
+   ```
+   2147274752 0
    ```
    This method is useful for getting stats half-way through the experiment.
 
-3. Save specific local variables to be accessible after the experiment is finished and the rest of the local variables have been deleted.
+3. Save specific local variables to be accessible after the experiment is finished and the rest of the local variables get deleted.
 
    ```python
-   exp3.keep_var_names('consumed', 'reclaimed', 'available')
+   exp3.keep_var_names('cpu_data', 'gpu_data')
    ```
    Note, that you need to pass the names of the variables and not the variables themselves.
 
-4. Finish the experiment, delete local variables, reclaim memory. Return and print the stats:
+4. Finish the experiment, delete local variables, reclaim memory. Return and print the final data:
+
    ```python
-   final_consumed, final_reclaimed, final_available = exp1.finish() # finish experiment
-   print("\nNumerical data:\n", final_consumed, final_reclaimed, final_available)
+   cpu_data_final, gpu_data_final = exp1.finish() # finish experiment
+   print("\nNumerical data:\n", cpu_data_final, gpu_data_final)
+   ```
+   prints:
+   ```
+   Numerical data:
+   IPyExperimentMemory(consumed=2147508224, reclaimed=2147487744, available=17213575168) IPyExperimentMemory(consumed=1073741824, reclaimed=1073741824, available=6766002176)
    ```
 
    If you don't care for saving the experiment's numbers, instead of calling `finish()`, you can just do:

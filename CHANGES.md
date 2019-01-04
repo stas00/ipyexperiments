@@ -7,7 +7,7 @@
 ### Breaking changes
 
 - made the module into proper subclasses, no more global function aliases. So now use directly the desired backend: `IPyExperimentsCPU`, `IPyExperimentsPytorch` as an experiments module. It should be trivial now to add other backends.
-
+- and `get_stats` method has been replaced with `data` property method, which now returns one or more `IPyExperimentMemory` named tuple(s) depending on the used subclass.
 
 
 ## 0.1.5 (2018-12-28)

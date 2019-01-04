@@ -3,6 +3,9 @@ __all__ = ['IPyExperimentsCPU', 'IPyExperimentsPytorch']
 import gc, os, sys, time, psutil
 from IPython import get_ipython
 from IPython.core.magics.namespace import NamespaceMagics # Used to query namespace.
+from collections import namedtuple
+
+IPyExperimentMemory = namedtuple('IPyExperimentMemory', ['consumed', 'reclaimed', 'available'])
 
 process = psutil.Process(os.getpid())
 
@@ -92,18 +95,22 @@ class IPyExperiments():
             gpu_ram_recl = 0
         return gen_ram_recl, gpu_ram_recl
 
-    def _format_stats(self, gen_ram_avail, gpu_ram_avail, gen_ram_cons, gpu_ram_cons, gen_ram_recl,  gpu_ram_recl ):
-        cons  = {'gen_ram': gen_ram_cons,  'gpu_ram': gpu_ram_cons }
-        recl  = {'gen_ram': gen_ram_recl,  'gpu_ram': gpu_ram_recl }
-        avail = {'gen_ram': gen_ram_avail, 'gpu_ram': gpu_ram_avail}
-        return cons, recl, avail
+    def _data_format(self, gen_ram_avail, gen_ram_cons, gen_ram_recl,
+                           gpu_ram_avail, gpu_ram_cons, gpu_ram_recl):
+        if self.backend == 'cpu':
+            return (IPyExperimentMemory(gen_ram_cons, gen_ram_recl, gen_ram_avail))
+        else:
+            return (IPyExperimentMemory(gen_ram_cons, gen_ram_recl, gen_ram_avail),
+                    IPyExperimentMemory(gpu_ram_cons, gpu_ram_recl, gpu_ram_avail))
 
-    def get_stats(self):
-        """ Return current stats """
+    @property
+    def data(self):
+        """ Return current data """
         gen_ram_avail, gpu_ram_avail = self._available()
         gen_ram_cons,  gpu_ram_cons  = self._consumed()
         gen_ram_recl,  gpu_ram_recl  = self._reclaimed()
-        return self._format_stats(gen_ram_avail, gpu_ram_avail, gen_ram_cons, gpu_ram_cons, gen_ram_recl, gpu_ram_recl)
+        return self._data_format(gen_ram_avail, gen_ram_cons, gen_ram_recl,
+                                 gpu_ram_avail, gpu_ram_cons, gpu_ram_recl)
 
     def print_state(self):
         """ Print memory stats (not exact due to pytorch memory caching) """
@@ -185,7 +192,9 @@ class IPyExperiments():
         print("\n") # extra vertical white space, to not mix with user's outputs
 
         gen_ram_avail, gpu_ram_avail = self._available()
-        return self._format_stats(gen_ram_avail, gpu_ram_avail, gen_ram_cons, gpu_ram_cons, gen_ram_recl, gpu_ram_recl)
+        return self._data_format(gen_ram_avail, gen_ram_cons, gen_ram_recl,
+                                 gpu_ram_avail, gpu_ram_cons, gpu_ram_recl)
+
 
     def __del__(self):
         # if explicit finish() wasn't called, do it on self-destruction
