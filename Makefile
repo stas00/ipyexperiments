@@ -134,6 +134,9 @@ install: clean ## install the package to the active python's site-packages
 test: ## run tests with the default python
 	pytest
 
+test-cpu: ## run tests with the default python and CUDA_VISIBLE_DEVICES=""
+	CUDA_VISIBLE_DEVICES="" pytest
+
 tools-update: ## install/update build tools
 	@echo "\n\n*** Updating build tools"
 	conda install -y conda-verify conda-build anaconda-client
