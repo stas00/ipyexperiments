@@ -53,7 +53,7 @@ class IPyExperiments():
         gc.collect()
         self.gpu_clear_cache()
 
-        self.gen_ram_used_start = self.gen_ram_used()
+        self.cpu_ram_used_start = self.cpu_ram_used()
         self.gpu_ram_used_start = self.gpu_ram_used()
         #print(f"gpu used f{self.gpu_ram_used_start}" )
         self.print_state()
@@ -76,47 +76,47 @@ class IPyExperiments():
         """ Return a list of local variables created since the beginning of the experiment """
         return self.namespace.who_ls()
 
-    def _available(self): return self.gen_ram_avail(), self.gpu_ram_avail()
+    def _available(self): return self.cpu_ram_avail(), self.gpu_ram_avail()
 
     def _consumed(self):
-        gen_ram_cons = self.gen_ram_used() - self.gen_ram_used_start
+        cpu_ram_cons = self.cpu_ram_used() - self.cpu_ram_used_start
         gpu_ram_cons = self.gpu_ram_used() - self.gpu_ram_used_start
         #print(f"gpu started with {self.gpu_ram_used_start}")
         #print(f"gpu consumed {gpu_ram_cons}")
-        return gen_ram_cons, gpu_ram_cons
+        return cpu_ram_cons, gpu_ram_cons
 
     def _reclaimed(self):
         # return 0s, unless called from finish() after memory reclamation
         if self.reclaimed:
-            gen_ram_recl = self.gen_ram_used_start + self.gen_ram_cons - self.gen_ram_used()
+            cpu_ram_recl = self.cpu_ram_used_start + self.cpu_ram_cons - self.cpu_ram_used()
             gpu_ram_recl = self.gpu_ram_used_start + self.gpu_ram_cons - self.gpu_ram_used()
         else:
-            gen_ram_recl = 0
+            cpu_ram_recl = 0
             gpu_ram_recl = 0
-        return gen_ram_recl, gpu_ram_recl
+        return cpu_ram_recl, gpu_ram_recl
 
-    def _data_format(self, gen_ram_avail, gen_ram_cons, gen_ram_recl,
+    def _data_format(self, cpu_ram_avail, cpu_ram_cons, cpu_ram_recl,
                            gpu_ram_avail, gpu_ram_cons, gpu_ram_recl):
         if self.backend == 'cpu':
-            return (IPyExperimentMemory(gen_ram_cons, gen_ram_recl, gen_ram_avail))
+            return (IPyExperimentMemory(cpu_ram_cons, cpu_ram_recl, cpu_ram_avail))
         else:
-            return (IPyExperimentMemory(gen_ram_cons, gen_ram_recl, gen_ram_avail),
+            return (IPyExperimentMemory(cpu_ram_cons, cpu_ram_recl, cpu_ram_avail),
                     IPyExperimentMemory(gpu_ram_cons, gpu_ram_recl, gpu_ram_avail))
 
     @property
     def data(self):
         """ Return current data """
-        gen_ram_avail, gpu_ram_avail = self._available()
-        gen_ram_cons,  gpu_ram_cons  = self._consumed()
-        gen_ram_recl,  gpu_ram_recl  = self._reclaimed()
-        return self._data_format(gen_ram_avail, gen_ram_cons, gen_ram_recl,
+        cpu_ram_avail, gpu_ram_avail = self._available()
+        cpu_ram_cons,  gpu_ram_cons  = self._consumed()
+        cpu_ram_recl,  gpu_ram_recl  = self._reclaimed()
+        return self._data_format(cpu_ram_avail, cpu_ram_cons, cpu_ram_recl,
                                  gpu_ram_avail, gpu_ram_cons, gpu_ram_recl)
 
     def print_state(self):
         """ Print memory stats (not exact due to pytorch memory caching) """
         print("\n*** Current state:")
-        print("Gen RAM Free {0:>7s} | Proc size {1}".format(
-            hs(self.gen_ram_avail()), hs(self.gen_ram_used())))
+        print("CPU RAM Free {0:>7s} | Proc size {1}".format(
+            hs(self.cpu_ram_avail()), hs(self.cpu_ram_used())))
         if self.backend == 'cpu': return
 
         gpu_ram_total, gpu_ram_free, gpu_ram_used = self.gpu_ram()
@@ -131,8 +131,8 @@ class IPyExperiments():
         self.running = False
 
         # first take the final snapshot of consumed resources
-        gen_ram_cons,  gpu_ram_cons = self._consumed()
-        self.gen_ram_cons = gen_ram_cons
+        cpu_ram_cons,  gpu_ram_cons = self._consumed()
+        self.cpu_ram_cons = cpu_ram_cons
         self.gpu_ram_cons = gpu_ram_cons
 
         # get the new var names since constructor
@@ -170,16 +170,16 @@ class IPyExperiments():
         self.reclaimed = True
 
         # now we can measure how much was reclaimed
-        gen_ram_recl,  gpu_ram_recl  = self._reclaimed()
-        gen_ram_pct = gen_ram_recl/gen_ram_cons if gen_ram_cons else 1
+        cpu_ram_recl,  gpu_ram_recl  = self._reclaimed()
+        cpu_ram_pct = cpu_ram_recl/cpu_ram_cons if cpu_ram_cons else 1
         gpu_ram_pct = gpu_ram_recl/gpu_ram_cons if gpu_ram_cons else 1
 
         print("\n*** RAM consumed during the experiment:")
-        print(f"Gen: {hs(gen_ram_cons) }")
+        print(f"CPU: {hs(cpu_ram_cons) }")
         if self.backend != 'cpu':
             print(f"GPU: {hs(gpu_ram_cons)}")
         print("\n*** RAM reclaimed at the end of the experiment:")
-        print(f"Gen: {hs(gen_ram_recl)} ({gen_ram_pct*100:.2f}%)")
+        print(f"CPU: {hs(cpu_ram_recl)} ({cpu_ram_pct*100:.2f}%)")
         if self.backend != 'cpu':
             print(f"GPU: {hs(gpu_ram_recl)} ({gpu_ram_pct*100:.2f}%)")
 
@@ -191,8 +191,8 @@ class IPyExperiments():
 
         print("\n") # extra vertical white space, to not mix with user's outputs
 
-        gen_ram_avail, gpu_ram_avail = self._available()
-        return self._data_format(gen_ram_avail, gen_ram_cons, gen_ram_recl,
+        cpu_ram_avail, gpu_ram_avail = self._available()
+        return self._data_format(cpu_ram_avail, cpu_ram_cons, cpu_ram_recl,
                                  gpu_ram_avail, gpu_ram_cons, gpu_ram_recl)
 
 
@@ -236,8 +236,8 @@ class IPyExperimentsCPU(IPyExperiments):
     #    #print("Starting IPyExperimentsCPU")
     #    super().start()
 
-    def gen_ram_used(self):  return int(process.memory_info().rss)
-    def gen_ram_avail(self): return int(psutil.virtual_memory().available)
+    def cpu_ram_used(self):  return int(process.memory_info().rss)
+    def cpu_ram_avail(self): return int(psutil.virtual_memory().available)
 
     def gpu_ram(self): return 0, 0, 0
     def gpu_ram_used(self):  return 0
