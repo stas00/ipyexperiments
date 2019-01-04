@@ -1,6 +1,6 @@
 # usage: make help
 
-.PHONY: clean clean-test clean-pyc clean-build docs help clean-pypi clean-build-pypi clean-pyc-pypi clean-test-pypi dist-pypi upload-pypi clean-conda clean-build-conda clean-pyc-conda clean-test-conda dist-conda upload-conda test tag bump bump-minor bump-major bump-dev bump-minor-dev bump-major-dev bump-post-release commit-tag git-pull git-not-dirty test-install upload release
+.PHONY: clean clean-test clean-pyc clean-build docs help clean-pypi clean-build-pypi clean-pyc-pypi clean-test-pypi dist-pypi upload-pypi clean-conda clean-build-conda clean-pyc-conda clean-test-conda dist-conda upload-conda test test-cpu tag bump bump-minor bump-major bump-dev bump-minor-dev bump-major-dev bump-post-release commit-tag git-pull git-not-dirty test-install upload release
 
 version_file = ipyexperiments/version.py
 version = $(shell python setup.py --version)
