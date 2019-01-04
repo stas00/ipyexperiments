@@ -148,9 +148,13 @@ release: ## do it all (other than testing)
 	${MAKE} test
 	${MAKE} git-not-dirty
 	${MAKE} bump
+	${MAKE} changes-finalize
 	${MAKE} commit-tag
 	${MAKE} dist
 	${MAKE} upload
+	${MAKE} bump-dev
+	${MAKE} changes-dev-cycle
+	${MAKE} commit-dev-cycle-push
 	${MAKE} test-install
 
 ##@ git helpers
@@ -171,7 +175,7 @@ git-not-dirty:
 
 commit-tag: ## commit and tag the release
 	@echo "\n\n*** Commit $(version) version"
-	git commit -m "version $(version) release" $(version_file)
+	git commit -m "version $(version) release" $(version_file) CHANGES.md
 
 	@echo "\n\n*** Tag $(version) version"
 	git tag -a $(version) -m "$(version)" && git push --tags
@@ -179,6 +183,12 @@ commit-tag: ## commit and tag the release
 	@echo "\n\n*** Push all changes"
 	git push
 
+commit-dev-cycle-push: ## commit version and CHANGES and push
+	@echo "\n\n*** Start new dev cycle: $(version)"
+	git commit -m "new dev cycle: $(version)" $(version_file) CHANGES.md
+
+	@echo "\n\n*** Push changes"
+	git push
 
 ##@ Testing new package installation
 
@@ -202,32 +212,43 @@ test-install: ## test conda/pip package by installing that version them
 	@# leave conda package installed: conda uninstall -y ipyexperiments
 
 
+##@ CHANGES.md file targets
+
+changes-finalize: ## fix the version and stamp the date
+	@echo "\n\n*** Adjust '## version (date)' in CHANGES.md"
+	perl -pi -e 'use POSIX qw(strftime); BEGIN{$$date=strftime "%Y-%m-%d", localtime};s|^##.*Work In Progress\)|## $(version) ($$date)|' CHANGES.md
+
+changes-dev-cycle: ## insert new template + version
+	@echo "\n\n*** Install new template + version in CHANGES.md"
+	perl -0777 -pi -e 's|^(##)|\n\n## $(version) (Work In Progress)\n\n- \n\n\n$$1|ms' CHANGES.md
+
+
 ##@ Version bumping
 
 # Support semver, but using python's .dev0/.post0 instead of -dev0/-post0
 
 bump-major: ## bump major level; remove .devX if any
-	@perl -pi -e 's|((\d+)\.(\d+).(\d+)(\.\w+\d+)?)|$$o=$$1; $$n=join(".", $$2+1, 0, 0); print STDERR "\n\n*** [$(cur_branch)] Changing version: $$o => $$n\n"; $$n |e' $(version_file)
+	@perl -pi -e 's|((\d+)\.(\d+).(\d+)(\.\w+\d+)?)|$$o=$$1; $$n=join(".", $$2+1, 0, 0); print STDERR "\n\n*** Changing version: $$o => $$n\n"; $$n |e' $(version_file)
 
 bump-minor: ## bump minor level; remove .devX if any
-	@perl -pi -e 's|((\d+)\.(\d+).(\d+)(\.\w+\d+)?)|$$o=$$1; $$n=join(".", $$2, $$3+1, 0); print STDERR "\n\n*** [$(cur_branch)] Changing version: $$o => $$n\n"; $$n |e' $(version_file)
+	@perl -pi -e 's|((\d+)\.(\d+).(\d+)(\.\w+\d+)?)|$$o=$$1; $$n=join(".", $$2, $$3+1, 0); print STDERR "\n\n*** Changing version: $$o => $$n\n"; $$n |e' $(version_file)
 
 bump-patch: ## bump patch level unless has .devX, then don't bump, but remove .devX
-	@perl -pi -e 's|((\d+)\.(\d+).(\d+)(\.\w+\d+)?)|$$o=$$1; $$n=$$5 ? join(".", $$2, $$3, $$4) :join(".", $$2, $$3, $$4+1); print STDERR "\n\n*** [$(cur_branch)] Changing version: $$o => $$n\n"; $$n |e' $(version_file)
+	@perl -pi -e 's|((\d+)\.(\d+).(\d+)(\.\w+\d+)?)|$$o=$$1; $$n=$$5 ? join(".", $$2, $$3, $$4) :join(".", $$2, $$3, $$4+1); print STDERR "\n\n*** Changing version: $$o => $$n\n"; $$n |e' $(version_file)
 
 bump: bump-patch ## alias to bump-patch (as it's used often)
 
 bump-post-release: ## add .post1 or bump post-release level .post2, .post3, ...
-	@perl -pi -e 's{((\d+\.\d+\.\d+)(\.\w+\d+)?)}{do { $$o=$$1; $$b=$$2; $$l=$$3||".post0"}; $$l=~s/(\d+)$$/$$1+1/e; $$n="$$b$$l"; print STDERR "\n\n*** [$(cur_branch)] Changing version: $$o => $$n\n"; $$n}e' $(version_file)
+	@perl -pi -e 's{((\d+\.\d+\.\d+)(\.\w+\d+)?)}{do { $$o=$$1; $$b=$$2; $$l=$$3||".post0"}; $$l=~s/(\d+)$$/$$1+1/e; $$n="$$b$$l"; print STDERR "\n\n*** Changing version: $$o => $$n\n"; $$n}e' $(version_file)
 
 bump-major-dev: ## bump major level and add .dev0
-	@perl -pi -e 's|((\d+)\.(\d+).(\d+)(\.\w+\d+)?)|$$o=$$1; $$n=join(".", $$2+1, 0, 0, "dev0"); print STDERR "\n\n*** [$(cur_branch)] Changing version: $$o => $$n\n"; $$n |e' $(version_file)
+	@perl -pi -e 's|((\d+)\.(\d+).(\d+)(\.\w+\d+)?)|$$o=$$1; $$n=join(".", $$2+1, 0, 0, "dev0"); print STDERR "\n\n*** Changing version: $$o => $$n\n"; $$n |e' $(version_file)
 
 bump-minor-dev: ## bump minor level and add .dev0
-	@perl -pi -e 's|((\d+)\.(\d+).(\d+)(\.\w+\d+)?)|$$o=$$1; $$n=join(".", $$2, $$3+1, 0, "dev0"); print STDERR "\n\n*** [$(cur_branch)] Changing version: $$o => $$n\n"; $$n |e' $(version_file)
+	@perl -pi -e 's|((\d+)\.(\d+).(\d+)(\.\w+\d+)?)|$$o=$$1; $$n=join(".", $$2, $$3+1, 0, "dev0"); print STDERR "\n\n*** Changing version: $$o => $$n\n"; $$n |e' $(version_file)
 
 bump-patch-dev: ## bump patch level and add .dev0
-	@perl -pi -e 's|((\d+)\.(\d+).(\d+)(\.\w+\d+)?)|$$o=$$1; $$n=join(".", $$2, $$3, $$4+1, "dev0"); print STDERR "\n\n*** [$(cur_branch)] Changing version: $$o => $$n\n"; $$n |e' $(version_file)
+	@perl -pi -e 's|((\d+)\.(\d+).(\d+)(\.\w+\d+)?)|$$o=$$1; $$n=join(".", $$2, $$3, $$4+1, "dev0"); print STDERR "\n\n*** Changing version: $$o => $$n\n"; $$n |e' $(version_file)
 
 bump-dev: bump-patch-dev ## alias to bump-patch-dev (as it's used often)
 
