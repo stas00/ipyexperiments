@@ -1,8 +1,8 @@
 # Changes
 
-## 0.1.6
+## 0.1.6 (2019-01-04)
 
-- on backend loading report the ID, Name and Total RAM of the GPU
+- on GPU backend loading report the ID, Name and Total RAM of the selected GPU
 - print_state now gives an easier to read report
 
 ### Breaking changes
