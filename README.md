@@ -46,11 +46,11 @@ Here is an example with using code from the [`fastai`](https://github.com/fastai
 Please, note, that I added a visual leading space to demonstrate the idea, but, of course, it won't be a valid python code.
 
 ```
-cell 1: exp1 = IPyExperiments()
+cell 1: exp1 = IPyExperimentsPytorch()
 cell 2:   learn1 = language_model_learner(data_lm, bptt=60, drop_mult=0.25, pretrained_model=URLs.WT103)
 cell 3:   learn1.lr_find()
 cell 4: del exp1
-cell 5: exp2 = IPyExperiments()
+cell 5: exp2 = IPyExperimentsPytorch()
 cell 6:   learn2 = language_model_learner(data_lm, bptt=70, drop_mult=0.3, pretrained_model=URLs.WT103)
 cell 7:   learn2.lr_find()
 cell 8: del exp2
@@ -62,39 +62,69 @@ The easiest way to see how this framework works is to read the [demo notebook](h
 
 ## Backends
 
-Backends allow experimentation with different GPU frameworks, like `pytorch`, `tensorflow`, etc.
+Backend subclasses allow experimentation with CPU-only and different GPU frameworks, like `pytorch`, `tensorflow`, etc.
 
-Currently `cpu` and `pytorch` backends are supported. `pytorch` is the default backend, it'll be used if you don't specify any other.
+Currently `IPyExperimentsCPU` and `IPyExperimentsPytorch` backends are supported.
 
-If you don't have a GPU or if you have it, but you don't use it for the experiment, you can initiate:
+If you don't have a GPU or if you have it, but you don't use it for the experiment, you can use:
 
    ```python
-   exp1 = IPyExperiments(backend='cpu')
+   exp1 = IPyExperimentsCPU()
    ```
 
-Additional machine learning backends can be easily supported. Just submit a PR after adding a few lines of code in `backend_load()` to support the backend you desire. The description of what's needed is in the comments of that method - it should be very easy to do.
+Additional machine learning backends can be easily supported. Just submit a PR with a subclass of `IPyExperimentsGPU` to support the backend you desire - model it after `IPyExperimentsPytorch`. The description of what's needed is in the comments of that method - it should be very easy to do.
 
 Please, note, that this module doesn't setup its `pip`/`conda` dependencies for the backend frameworks, since you must have already installed those before attempting to use this module.
 
 ## Multiple GPUs
 
-This framework currently works with the GPU that is currently selected by the backend. For most users it'll be `id=0`. If you instructed your backend (e.g. `pytorch`) to use a different GPU, `IPyExperiments` will know to use that GPU instead. For example, with the `pytorch` backed, it's discovered with: `torch.cuda.current_device()`.
+Currently, the module assumes that you're using a single GPU for the duration of an experiment. The backend subclass implements the selection of the correct GPU. It should be easy to subclass it to support experiments on multiple GPUs. I have only one GPU at the moment, so you are welcome to submit PRs supporting experiments running on multiple GPUs at the same time.
 
-It can be extended to support multiple-GPUs concurrently, but I have only one GPU at the moment, so you are welcome to submit PRs supporting stats for multiple GPUs at the same time.
+If you have only one GPU, the default device ID `0` will be used by the backend.
+
+### Different Ordering of GPU IDs
+
+It's crucial to know that some applications, like `nvidia-smi`, may order GPUs in a different way from the python framework. For example, by default `pytorch` uses `FASTEST_FIRST` ordering, whereas `nvidia-smi` uses `PCI_BUS_ID` ordering. The ordering is normally defined by the `CUDA_DEVICE_ORDER` environment variable, but `nvidia-smi` ignores it. So if you want your python code to be ordering your GPUs in the same way as `nvidia-smi`, set in `~.bashrc` or another shell init file:
+
+```bash
+export CUDA_DEVICE_ORDER=PCI_BUS_ID
+```
+
+or from python:
+
+```python
+import os
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+...
+device = torch.cuda.device(0)
+print torch.cuda.get_device_name(0)
+```
+
+### IPyExperimentsPytorch
+
+This subclass uses `torch.cuda.current_device()` to get the currently selected device ID. And it prints it out in the banner of the experiment starting message, to help you validate you're using the correct ID.
+
+So in order to get `IPyExperimentsPytorch` to use the correct device ID in the multi-gpu environment, set it up before running the experiment with:
+
+```python
+device_id = 1 # 0, 2, ...
+torch.cuda.set_device(device_id) # sets the default device ID
+```
+
 
 ## API
 
 ```
-from ipyexperiments import IPyExperiments
+from ipyexperiments import IPyExperimentsPytorch
 ```
 
 1. Create an experiment object:
    ```python
-   exp1 = IPyExperiments()
+   exp1 = IPyExperimentsPytorch()
    ```
-   By default, the `pytorch` backend is used. You can change that to load a `cpu`-only mode, with:
+   To use CPU-only experiments, use:
    ```python
-   exp1 = IPyExperiments('cpu')
+   exp1 = IPyExperimentsCPU()
    ```
    More backends will be supported in the future.
 
@@ -127,12 +157,12 @@ from ipyexperiments import IPyExperiments
    ```python
    del exp1
    ```
-   If you re-run the experiment without either calling `exp1.finish()` or `del exp1`, e.g. if you decided to abort it half-way to the end, or say you hit "cuda: out of memory" error, then re-running the constructor `IPyExperiments()` assigning to the same experiment object, will trigger a destructor first. This will delete the local vars created until that point, reclaim memory and the previous experiment's stats will be printed first.
+   If you re-run the experiment without either calling `exp1.finish()` or `del exp1`, e.g. if you decided to abort it half-way to the end, or say you hit "cuda: out of memory" error, then re-running the constructor `IPyExperimentsPytorch()` assigning to the same experiment object, will trigger a destructor first. This will delete the local vars created until that point, reclaim memory and the previous experiment's stats will be printed first.
 
 5. Context manager is supported:
 
    ```python
-   with IPyExperiments():
+   with IPyExperimentsPytorch():
        x1 = consume_cpu(2**14)
        x2 = consume_gpu(2**14)
    ```
@@ -141,7 +171,7 @@ from ipyexperiments import IPyExperiments
    If you need to access the experiment object use:
 
    ```python
-   with IPyExperiments() as exp:
+   with IPyExperimentsPytorch() as exp:
        x1 = consume_cpu(2**14)
        x2 = consume_gpu(2**14)
        exp.keep_var_names('x1')
@@ -157,7 +187,7 @@ If you haven't asked for any local variables to be saved via `keep_var_names()` 
 You do need to be aware that some frameworks consume a big chunk of general and GPU RAM when they are used for the first time. For example `pytorch` `cuda` [eats up](
 https://docs.fast.ai/dev/gpu.html#unusable-gpu-ram-per-process) about 0.5GB of GPU RAM and 2GB of general RAM on load (not necessarily on `import`, but usually later when it's used), so if your experiment started with doing a `cuda` action for the first time in a given process, expect to lose that much RAM - this one can't be reclaimed.
 
-But `IPyExperiments` does all this for you, for example, preloading `pytorch` `cuda` if the `pytorch` backend (default) is used. During the preloading it internally does:
+But `IPyExperimentsPytorch` does all this for you, for example, preloading `pytorch` `cuda` if the `pytorch` backend (default) is used. During the preloading it internally does:
 
    ```python
    import pytorch
@@ -178,7 +208,7 @@ So if you do this:
 # cell1
 x1 = 1
 # cell 2
-with IPyExperiments():
+with IPyExperimentsCPU():
     x1 = 10
     x2 = 20
 ```
@@ -196,11 +226,11 @@ To work around this problem use unique variable names inside experiments, as com
 It's perfectly fine though to use the same variable names across different experiments:
 ```
 # cell1
-with IPyExperiments():
+with IPyExperimentsCPU():
     x1 = 10
     x2 = 20
 # cell 2
-with IPyExperiments():
+with IPyExperimentsCPU():
     x1 = 100
     x2 = 200
 ```
@@ -213,7 +243,14 @@ If you have some brilliant insights on how to resolve this conundrum I'm all ear
 
 PRs with improvements and new features and Issues with suggestions are welcome.
 
-If you work with `tensorflow`, please, consider sending a PR to support it - by mimicking the `pytorch`-backend implementation.
+If you work with `tensorflow`, please, consider sending a PR to support it - by mimicking the `IPyExperimentsPytorch` implementation.
+
+
+
+## See Also
+
+- [ipygpulogger](https://github.com/stas00/ipygpulogger) - GPU Logger for jupyter/ipython (memory usage, execution time). After each cell's execution this sister module will automatically report GPU and general RAM used by that cell (and other goodies).
+
 
 ## History
 

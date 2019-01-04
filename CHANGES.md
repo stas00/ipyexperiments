@@ -4,6 +4,12 @@
 
 - on backend loading report the ID, Name and Total RAM of the GPU
 
+### Breaking changes
+
+- made the module into proper subclasses, no more global function aliases. So now use directly the desired backend: `IPyExperimentsCPU`, `IPyExperimentsPytorch` as an experiments module. It should be trivial now to add other backends.
+
+
+
 ## 0.1.5 (2018-12-28)
 
 - revert the attempt to account for modified variables - it doesn't work if some function during the experiment modified a variable introduced before the experiment - we surely must not delete it.

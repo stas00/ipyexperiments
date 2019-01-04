@@ -1,13 +1,8 @@
-__all__ = ['IPyExperiments']
+__all__ = ['IPyExperimentsCPU', 'IPyExperimentsPytorch']
 
 import gc, os, sys, time, psutil
 from IPython import get_ipython
 from IPython.core.magics.namespace import NamespaceMagics # Used to query namespace.
-
-try:
-    import pynvml
-except Exception as e:
-    raise Exception(f"{e}\nYou need to install the nvidia-ml-py3 module; pip install nvidia-ml-py3")
 
 process = psutil.Process(os.getpid())
 
@@ -18,41 +13,18 @@ def hs(num, suffix='B'):
         num /= 1024.0
     return "%.1f %s%s" % (num, 'Y', suffix)
 
-def gen_ram_used():  return int(process.memory_info().rss)
-def gen_ram_avail(): return int(psutil.virtual_memory().available)
-
-def gpu_ram_zeros(): return 0, 0, 0
-def gpu_ram_real():
-    """ for the currently selected GPU device return: total, free and used RAM in bytes """
-    id = gpu_current_device()
-    handle = pynvml.nvmlDeviceGetHandleByIndex(id)
-    info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-    return info.total, info.free, info.used
-def gpu_ram_used():  return gpu_ram()[2]
-def gpu_ram_avail(): return gpu_ram()[1]
-
-gpu_current_device = lambda: 0
-gpu_clear_cache    = lambda: None
-
 class IPyExperiments():
     "Create an experiment with time/memory checkpoints"
 
-    def __init__(self, backend='pytorch'):
+    def __init__(self):
         """ Instantiate an object with parameters:
-        backend: 'cpu', 'pytorch' (default), ...
         """
-
-        self.backend_load(backend)
 
         print("\n*** Starting experiment...")
         self.running = True
         self.reclaimed = False
         self.start_time = time.time()
         self.var_names_keep = []
-
-        # base-line
-        gc.collect()
-        gpu_clear_cache()
 
         # grab the notebook var names during creation
         ipython = get_ipython()
@@ -70,8 +42,16 @@ class IPyExperiments():
         # variables names before and after are compared).
         #self.var_start = {k:self.namespace.shell.user_ns[k] for k in self.var_names_start}
 
-        self.gen_ram_used_start = gen_ram_used()
-        self.gpu_ram_used_start = gpu_ram_used()
+    def backend_init(self): pass
+
+    def start(self):
+        #print("Starting IPyExperiments")
+        # base-line
+        gc.collect()
+        self.gpu_clear_cache()
+
+        self.gen_ram_used_start = self.gen_ram_used()
+        self.gpu_ram_used_start = self.gpu_ram_used()
         #print(f"gpu used f{self.gpu_ram_used_start}" )
         self.print_state()
         print("\n") # extra vertical white space, to not mix with user's outputs
@@ -81,55 +61,6 @@ class IPyExperiments():
 
     def __exit__(self, *exc):
         self.__del__()
-
-    # currently supporting:
-    # - cpu: no gpu backend
-    # - pytorch: (default)
-    #
-    # it can be easily expanded to support other backends if needed
-    #
-    # in order to add a new backend, we need:
-    # 1. import backend module
-    # 2. preload code that claims unreclaimable gpu memory
-    # 3. function that returns the current gpu id
-    # 4. function that releases the cache if any
-    def backend_load(self, backend='pytorch'):
-        """ Load one of the supported backends before running the first experiment, to set things up.
-        """
-        global gpu_ram
-        global gpu_current_device, gpu_clear_cache
-
-        print(f"*** Loading backend: {backend}")
-        self.backend = backend
-
-        if backend == 'cpu':
-            # send 0's to any gpu inquiry
-            gpu_ram = gpu_ram_zeros
-            _, _, _ = gpu_ram() # check that all is ready to go
-            return
-
-        # gpu backends below
-        gpu_ram = gpu_ram_real
-        # initialize pynvml
-        pynvml.nvmlInit()
-
-        if backend == 'pytorch':
-            import torch, torch.cuda
-            # sanity check
-            if not torch.cuda.is_available():
-                raise Exception(f"torch.cuda.is_available() returns False; can't continue")
-            # force pytorch to load cuDNN and its kernels to claim unreclaimable memory
-            torch.ones((1, 1)).cuda()
-            gpu_current_device = torch.cuda.current_device
-            gpu_clear_cache    = torch.cuda.empty_cache
-            id = gpu_current_device()
-            # check that all is ready to go, and we get the RAM info
-            gpu_ram_total, gpu_ram_free, gpu_ram_used = gpu_ram()
-
-            print(f"Device: ID {id}, {torch.cuda.get_device_name(id)} ({hs(gpu_ram_total)} RAM)")
-            return
-
-        raise ValueError(f"backend {backend} isn't yet supported; please submit a request at https://github.com/stas00/ipyexperiments/issues")
 
     def keep_var_names(self, *args):
         """ Pass a list of local variable **names** to not be deleted at the end of the experiment """
@@ -142,11 +73,11 @@ class IPyExperiments():
         """ Return a list of local variables created since the beginning of the experiment """
         return self.namespace.who_ls()
 
-    def _available(self): return gen_ram_avail(), gpu_ram_avail()
+    def _available(self): return self.gen_ram_avail(), self.gpu_ram_avail()
 
     def _consumed(self):
-        gen_ram_cons = gen_ram_used() - self.gen_ram_used_start
-        gpu_ram_cons = gpu_ram_used() - self.gpu_ram_used_start
+        gen_ram_cons = self.gen_ram_used() - self.gen_ram_used_start
+        gpu_ram_cons = self.gpu_ram_used() - self.gpu_ram_used_start
         #print(f"gpu started with {self.gpu_ram_used_start}")
         #print(f"gpu consumed {gpu_ram_cons}")
         return gen_ram_cons, gpu_ram_cons
@@ -154,8 +85,8 @@ class IPyExperiments():
     def _reclaimed(self):
         # return 0s, unless called from finish() after memory reclamation
         if self.reclaimed:
-            gen_ram_recl = self.gen_ram_used_start + self.gen_ram_cons - gen_ram_used()
-            gpu_ram_recl = self.gpu_ram_used_start + self.gpu_ram_cons - gpu_ram_used()
+            gen_ram_recl = self.gen_ram_used_start + self.gen_ram_cons - self.gen_ram_used()
+            gpu_ram_recl = self.gpu_ram_used_start + self.gpu_ram_cons - self.gpu_ram_used()
         else:
             gen_ram_recl = 0
             gpu_ram_recl = 0
@@ -178,10 +109,10 @@ class IPyExperiments():
         """ Print memory stats (not exact due to pytorch memory caching) """
         print("\n*** Current state:")
         print("Gen RAM Free {0:>7s} | Proc size {1}".format(
-            hs(gen_ram_avail()), hs(gen_ram_used())))
+            hs(self.gen_ram_avail()), hs(self.gen_ram_used())))
         if self.backend == 'cpu': return
 
-        gpu_ram_total, gpu_ram_free, gpu_ram_used = gpu_ram()
+        gpu_ram_total, gpu_ram_free, gpu_ram_used = self.gpu_ram()
         gpu_ram_util = gpu_ram_used/gpu_ram_free*100 if gpu_ram_free else 100
         print("GPU RAM Free {0:>7s} | Used {1} | Util {2:2.1f}% | Total {3}".format(
             hs(gpu_ram_free), hs(gpu_ram_used), gpu_ram_util, hs(gpu_ram_total)))
@@ -228,7 +159,7 @@ class IPyExperiments():
             print("\n*** Potential memory leaks during the experiment:")
             print(f"uncollected gc.garbage of {len(gc.garbage)} objects")
         # now we can attempt to reclaim GPU memory
-        gpu_clear_cache()
+        self.gpu_clear_cache()
         self.reclaimed = True
 
         # now we can measure how much was reclaimed
@@ -259,3 +190,125 @@ class IPyExperiments():
     def __del__(self):
         # if explicit finish() wasn't called, do it on self-destruction
         if self.running: self.finish()
+
+
+# currently supporting:
+# - IPyExperimentsCPU: no gpu backend
+# - IPyExperimentsPytorch: pytorch backend
+#
+# How to add support for new backends:
+#
+# in order to add a new backend, add a new subclass w/
+# 1. import backend module
+# 2. preload code that claims unreclaimable gpu memory
+# 3. set the current gpu id
+# 4. function that releases the cache if any
+# 5. etc. - model after the IPyExperimentsPytorch subclass
+
+class IPyExperimentsCPU(IPyExperiments):
+    """ CPU backend can be used directly for non-gpu setups """
+
+    def __init__(self):
+        super().__init__()
+        self.backend = 'cpu'
+        self.has_gpu = False
+        if self.__class__.__name__ == 'IPyExperimentsCPU':
+            #print("Starting IPyExperimentsCPU")
+            self.backend_init()
+            self.start()
+
+    def backend_init(self):
+        super().backend_init()
+        self.gpu_current_device_id = -1
+        if self.__class__.__name__ == 'IPyExperimentsCPU':
+            print(f"Backend: CPU-only")
+
+    #def start(self):
+    #    #print("Starting IPyExperimentsCPU")
+    #    super().start()
+
+    def gen_ram_used(self):  return int(process.memory_info().rss)
+    def gen_ram_avail(self): return int(psutil.virtual_memory().available)
+
+    def gpu_ram(self): return 0, 0, 0
+    def gpu_ram_used(self):  return 0
+    def gpu_ram_avail(self): return 0
+
+    def gpu_clear_cache(self): pass
+
+
+class IPyExperimentsGPU(IPyExperimentsCPU):
+    """ generic GPU backend must be subclassed by a specific backend before being used """
+
+    def __init__(self):
+        super().__init__()
+        self.backend = 'gpu-generic'
+        self.has_gpu = True
+        # not a class to be used directly:
+        # self.backend_init()
+        # self.start()
+
+    def backend_init(self):
+        super().backend_init()
+
+        try:
+            import pynvml
+        except Exception as e:
+            raise Exception(f"{e}\nYou need to install the nvidia-ml-py3 module; pip install nvidia-ml-py3")
+
+        # initialize pynvml
+        self.pynvml = pynvml
+        pynvml.nvmlInit()
+
+    #def start(self):
+    #    #print("Starting IPyExperimentsGPU")
+    #    super().start()
+
+    def gpu_ram(self):
+        """ for the currently selected GPU device return: total, free and used RAM in bytes """
+        handle = self.pynvml.nvmlDeviceGetHandleByIndex(self.gpu_current_device_id)
+        info = self.pynvml.nvmlDeviceGetMemoryInfo(handle)
+        return info.total, info.free, info.used
+
+    def gpu_ram_used(self):  return self.gpu_ram()[2]
+    def gpu_ram_avail(self): return self.gpu_ram()[1]
+
+    def gpu_clear_cache(self): pass
+
+
+class IPyExperimentsPytorch(IPyExperimentsGPU):
+
+    def __init__(self):
+        super().__init__()
+        self.backend = 'pytorch'
+        if self.__class__.__name__ == 'IPyExperimentsPytorch':
+            #print("Starting IPyExperimentsPytorch")
+            self.backend_init()
+            self.start()
+
+    def backend_init(self):
+        super().backend_init()
+        print(f"Backend: Pytorch")
+
+        import torch
+        self.torch = torch
+
+        # sanity check
+        if not torch.cuda.is_available():
+            raise Exception(f"torch.cuda.is_available() returns False; can't continue")
+
+        self.gpu_current_device_id = self.torch.cuda.current_device()
+
+        # force pytorch to pre-load cuDNN and its kernels to claim unreclaimable memory
+        torch.ones((1, 1)).cuda()
+
+        # check that all is ready to go, and we get the RAM info
+        gpu_ram_total, gpu_ram_free, gpu_ram_used = self.gpu_ram()
+
+        # announce which device is used for this experiment
+        print(f"Device: ID {self.gpu_current_device_id}, {torch.cuda.get_device_name(self.gpu_current_device_id)} ({hs(gpu_ram_total)} RAM)")
+
+    #def start(self):
+    #    super().start()
+
+    def gpu_clear_cache(self): self.torch.cuda.empty_cache()
