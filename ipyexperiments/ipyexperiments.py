@@ -113,14 +113,11 @@ class IPyExperiments():
                                  gpu_ram_avail, gpu_ram_cons, gpu_ram_recl)
 
     def print_state(self):
-        """ Print memory stats (not exact due to pytorch memory caching) """
+        """ Print memory stats """
         print("\n*** Current state:")
-
         print(f"RAM:   Used      Free     Total    Util")
 
-        cpu_ram_free = self.cpu_ram_avail()
-        cpu_ram_used = self.cpu_ram_used()
-        cpu_ram_total = cpu_ram_free + cpu_ram_used
+        cpu_ram_total, cpu_ram_free, cpu_ram_used = self.cpu_ram()
         cpu_ram_util = cpu_ram_used/cpu_ram_free*100 if cpu_ram_free else 100
         print(f"CPU: {hs(cpu_ram_used):>8s}  {hs(cpu_ram_free):>8s} {hs(cpu_ram_total):>8s} {cpu_ram_util:6.2f}% ")
         if self.backend == 'cpu': return
@@ -180,14 +177,12 @@ class IPyExperiments():
         cpu_ram_pct = cpu_ram_recl/cpu_ram_cons if cpu_ram_cons else 1
         gpu_ram_pct = gpu_ram_recl/gpu_ram_cons if gpu_ram_cons else 1
 
-        print("\n*** RAM consumed during the experiment:")
-        print(f"CPU: {hs(cpu_ram_cons) }")
+        print("\n*** Experiment memory:")
+        print(f"RAM:  Consumed     Reclaimed")
+
+        print(    f"CPU: {hs(cpu_ram_cons):>8s} {hs(cpu_ram_recl):>8s} ({cpu_ram_pct*100:6.2f}%)")
         if self.backend != 'cpu':
-            print(f"GPU: {hs(gpu_ram_cons)}")
-        print("\n*** RAM reclaimed at the end of the experiment:")
-        print(f"CPU: {hs(cpu_ram_recl)} ({cpu_ram_pct*100:.2f}%)")
-        if self.backend != 'cpu':
-            print(f"GPU: {hs(gpu_ram_recl)} ({gpu_ram_pct*100:.2f}%)")
+            print(f"GPU: {hs(gpu_ram_cons):>8s} {hs(gpu_ram_recl):>8s} ({gpu_ram_pct*100:6.2f}%)")
 
         elapsed_time = int(time.time() - self.start_time)
         print("\n*** Elapsed wallclock time:")
@@ -242,8 +237,12 @@ class IPyExperimentsCPU(IPyExperiments):
     #    #print("Starting IPyExperimentsCPU")
     #    super().start()
 
-    def cpu_ram_used(self):  return int(process.memory_info().rss)
-    def cpu_ram_avail(self): return int(psutil.virtual_memory().available)
+    def cpu_ram(self): return (int(psutil.virtual_memory().total),
+                               int(psutil.virtual_memory().available),
+                               int(process.memory_info().rss))
+    def cpu_ram_total(self): return self.cpu_ram()[0]
+    def cpu_ram_avail(self): return self.cpu_ram()[1]
+    def cpu_ram_used(self):  return self.cpu_ram()[2]
 
     def gpu_ram(self): return 0, 0, 0
     def gpu_ram_used(self):  return 0
