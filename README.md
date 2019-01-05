@@ -129,6 +129,8 @@ from ipyexperiments import IPyExperimentsPytorch
    ```
    More backends will be supported in the future.
 
+   It's very important that the variables used in the scope of the experiment are unique and haven't been defined before (technically, they shouldn't be in `locals()`), because otherwise they won't get cleared out. For more details, see: [Caveats](#caveats).
+
 2. Get experiment's data so far:
    ```python
    exp1 = IPyExperimentsCPU()
@@ -166,7 +168,7 @@ from ipyexperiments import IPyExperimentsPytorch
    ```
    Note, that you need to pass the names of the variables and not the variables themselves.
 
-4. Finish the experiment, delete local variables, reclaim memory. Return and print the final data:
+4. Finish the experiment, delete newly defined local variables, reclaim memory. Return and print the final data:
 
    ```python
    cpu_data_final, gpu_data_final = exp1.finish() # finish experiment
@@ -182,7 +184,15 @@ from ipyexperiments import IPyExperimentsPytorch
    ```python
    del exp1
    ```
-   If you re-run the experiment without either calling `exp1.finish()` or `del exp1`, e.g. if you decided to abort it half-way to the end, or say you hit "cuda: out of memory" error, then re-running the constructor `IPyExperimentsPytorch()` assigning to the same experiment object, will trigger a destructor first. This will delete the local vars created until that point, reclaim memory and the previous experiment's stats will be printed first.
+   If you re-run the experiment without either calling `exp1.finish()` or `del exp1`, e.g. if you decided to abort it half-way to the end, or say you hit "cuda: out of memory" error, then re-running the constructor `IPyExperimentsPytorch()` assigning to the same experiment object, will trigger a destructor first. This will delete the new local variables created until that point, reclaim memory and the previous experiment's report will be printed first.
+
+   If the memory report doesn't have the memory fully reclaimed, make sure to check the finish report to see that all the variables got deleted:
+
+   ```
+   *** Local variables:
+   Deleted: var1, var2, ...
+   ```
+   The module can only detect and then delete new variables defined in the cope of the experiment and they must not have been defined before it started. For more details, see: [Caveats](#caveats).
 
 5. Context manager is supported:
 
