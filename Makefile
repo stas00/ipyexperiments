@@ -152,10 +152,10 @@ release: ## do it all (other than testing)
 	${MAKE} commit-tag
 	${MAKE} dist
 	${MAKE} upload
+	${MAKE} test-install
 	${MAKE} bump-dev
 	${MAKE} changes-dev-cycle
 	${MAKE} commit-dev-cycle-push
-	${MAKE} test-install
 
 ##@ git helpers
 
