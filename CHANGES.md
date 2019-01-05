@@ -3,7 +3,7 @@
 
 
 
-## 0.1.7.dev0 (Work In Progress)
+## 0.1.8 (2019-01-05)
 
 - fix bug in memory Utilization calculation
 
