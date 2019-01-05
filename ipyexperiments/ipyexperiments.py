@@ -117,12 +117,12 @@ class IPyExperiments():
         print(f"RAM:   Used      Free     Total    Util")
 
         cpu_ram_total, cpu_ram_free, cpu_ram_used = self.cpu_ram()
-        cpu_ram_util = cpu_ram_used/cpu_ram_free*100 if cpu_ram_free else 100
+        cpu_ram_util = cpu_ram_used/cpu_ram_total*100 if cpu_ram_total else 100
         print(f"CPU: {hs(cpu_ram_used):>8s}  {hs(cpu_ram_free):>8s} {hs(cpu_ram_total):>8s} {cpu_ram_util:6.2f}% ")
         if self.backend == 'cpu': return
 
         gpu_ram_total, gpu_ram_free, gpu_ram_used = self.gpu_ram()
-        gpu_ram_util = gpu_ram_used/gpu_ram_free*100 if gpu_ram_free else 100
+        gpu_ram_util = gpu_ram_used/gpu_ram_total*100 if gpu_ram_total else 100
         print(f"GPU: {hs(gpu_ram_used):>8s}  {hs(gpu_ram_free):>8s} {hs(gpu_ram_total):>8s} {gpu_ram_util:6.2f}% ")
 
 
