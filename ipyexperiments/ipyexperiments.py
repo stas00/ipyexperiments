@@ -154,7 +154,7 @@ class IPyExperiments():
         # extract the var names added during the experiment and delete
         # them, with the exception of those we were told to preserve
         var_names_new = list(set(var_names_cur) - set(self.var_names_start) - set(self.var_names_keep))
-        print("\n*** Local variables:")
+        print("\n*** Newly defined local variables:")
         print("Deleted:", ", ".join(sorted(var_names_new)))
         for x in var_names_new: self.namespace.xdel(x)
         if self.var_names_keep:
