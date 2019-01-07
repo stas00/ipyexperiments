@@ -19,7 +19,7 @@ As an extra bonus you get access to the memory consumption data, so you can use 
 
 The idea behind this module is very simple - it implements a python function-like functionality, where its local variables get destroyed at the end of its run, giving us memory back, except it'll work across multiple jupyter notebook cells (or ipython). In addition it also runs `gc.collect()` to immediately release badly behaved variables with circular references, and reclaim general and GPU RAM. It also helps to discover memory leaks, and performs various other useful things behind the scenes.
 
-![Usage demo](docs/images/usage1.png)
+![Usage demo](https://raw.githubusercontent.com/stas00/ipyexperiments/master/docs/images/usage1.png)
 
 ## Installation
 
@@ -280,7 +280,16 @@ PRs with improvements and new features and Issues with suggestions are welcome.
 
 If you work with `tensorflow`, please, consider sending a PR to support it - by mimicking the `IPyExperimentsPytorch` implementation.
 
+## Testing
 
+1. Install my fork of `pytest-ipynb` (the original one is no longer being maintained)
+   ```
+   pip install git+https://github.com/stas00/pytest-ipynb.git
+   ```
+2. Run the test suite
+   ```
+   make test
+   ```
 
 ## See Also
 
