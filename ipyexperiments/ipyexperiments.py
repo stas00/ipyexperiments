@@ -1,9 +1,16 @@
 __all__ = ['IPyExperimentsCPU', 'IPyExperimentsPytorch']
 
-import gc, os, sys, time, psutil
+from .cell_logger import CellLogger
+import gc, os, sys, time, psutil, weakref
+import logging
 from IPython import get_ipython
 from IPython.core.magics.namespace import NamespaceMagics # Used to query namespace.
 from collections import namedtuple
+
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.ERROR)
+#logger.setLevel(logging.DEBUG)
 
 IPyExperimentMemory = namedtuple('IPyExperimentMemory', ['consumed', 'reclaimed', 'available'])
 
@@ -19,11 +26,31 @@ def hs(num, suffix='B'):
 class IPyExperiments():
     "Create an experiment with time/memory checkpoints"
 
-    def __init__(self):
+    def __init__(self, enable=True,
+                 cl_enable=True, cl_compact=False, cl_gc_collect=True):
         """ Instantiate an object with parameters:
+
+        Parameters:
+        * enable=True        - run just the CellLogger if cl_enable=True
+
+        Cell logger Parameters: these are being passed to CellLogger (and the defaults)
+        * cl_enable=True     - run the cell logger
+        * cl_compact=False   - cell report compact
+        * cl_gc_collect=True - gc_collect at the end of each cell before mem measurement
+
         """
 
-        self.running = True
+        if cl_enable:
+            self.cl = CellLogger(exp=self, compact=cl_compact, gc_collect=cl_gc_collect)
+        else:
+            self.cl = None
+
+        self.enable = enable
+
+        self.running   = False
+
+        if not self.enable: return
+
         self.reclaimed = False
         self.start_time = time.time()
         self.var_names_keep = []
@@ -52,11 +79,20 @@ class IPyExperiments():
         gc.collect()
         self.gpu_clear_cache()
 
-        self.cpu_ram_used_start = self.cpu_ram_used()
-        self.gpu_ram_used_start = self.gpu_ram_used()
-        #print(f"gpu used f{self.gpu_ram_used_start}" )
-        self.print_state()
-        print("\n") # extra vertical white space, to not mix with user's outputs
+        if self.enable:
+
+            self.running = True
+
+            self.cpu_ram_used_start = self.cpu_ram_used()
+            self.gpu_ram_used_start = self.gpu_ram_used()
+            #print(f"gpu used f{self.gpu_ram_used_start}")
+
+            self.print_state()
+            # XXX: perhaps prefix all the prints from exp with some |?
+            print("\n") # extra vertical white space, to not mix with user's outputs
+
+        # start the per cell sub-system
+        if self.cl: self.cl.start()
 
     def __enter__(self):
         return self
@@ -128,6 +164,11 @@ class IPyExperiments():
 
     def finish(self):
         """ Finish the experiment, reclaim memory, return final stats """
+        print(self.__class__.__name__ + ": Finishing")
+
+        if self.cl: self.cl.stop()
+
+        if not self.enable: return
 
         self.running = False
 
@@ -214,12 +255,12 @@ class IPyExperiments():
 class IPyExperimentsCPU(IPyExperiments):
     """ CPU backend can be used directly for non-gpu setups """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.backend = 'cpu'
         self.has_gpu = False
         if self.__class__.__name__ == 'IPyExperimentsCPU':
-            #print("Starting IPyExperimentsCPU")
+            logger.debug("Starting IPyExperimentsCPU")
             self.backend_init()
             self.start()
 
@@ -227,7 +268,7 @@ class IPyExperimentsCPU(IPyExperiments):
         super().backend_init()
         self.gpu_current_device_id = -1
         if self.__class__.__name__ == 'IPyExperimentsCPU':
-            print("\n*** Experiment started with the CPU-only backend")
+            print("\n*** Experiment started with the CPU-only backend\n")
 
     #def start(self):
     #    #print("Starting IPyExperimentsCPU")
@@ -250,8 +291,8 @@ class IPyExperimentsCPU(IPyExperiments):
 class IPyExperimentsGPU(IPyExperimentsCPU):
     """ generic GPU backend must be subclassed by a specific backend before being used """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.backend = 'gpu-generic'
         self.has_gpu = True
         # not a class to be used directly:
@@ -288,16 +329,17 @@ class IPyExperimentsGPU(IPyExperimentsCPU):
 
 class IPyExperimentsPytorch(IPyExperimentsGPU):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.backend = 'pytorch'
         if self.__class__.__name__ == 'IPyExperimentsPytorch':
-            #print("Starting IPyExperimentsPytorch")
+            logger.debug("Starting IPyExperimentsPytorch")
             self.backend_init()
             self.start()
 
     def backend_init(self):
         super().backend_init()
+
         print("\n*** Experiment started with the Pytorch backend")
 
         import torch
@@ -316,7 +358,7 @@ class IPyExperimentsPytorch(IPyExperimentsGPU):
         gpu_ram_total, gpu_ram_free, gpu_ram_used = self.gpu_ram()
 
         # announce which device is used for this experiment
-        print(f"Device: ID {self.gpu_current_device_id}, {torch.cuda.get_device_name(self.gpu_current_device_id)} ({hs(gpu_ram_total)} RAM)")
+        print(f"Device: ID {self.gpu_current_device_id}, {torch.cuda.get_device_name(self.gpu_current_device_id)} ({hs(gpu_ram_total)} RAM)\n")
 
     #def start(self):
     #    super().start()
