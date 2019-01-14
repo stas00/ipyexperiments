@@ -161,14 +161,13 @@ from ipyexperiments import IPyExperimentsPytorch
 Please refer to the [demo notebook](https://github.com/stas00/ipyexperiments/blob/master/demo.ipynb) to see this API in action.
 
 
-## Framework Preloading and Memory Leak Detection
+## Memory Leak Detection and Framework Preloading
 
-If you haven't asked for any local variables to be saved via `keep_var_names()` and if the process finished with big chunks of memory un-reclaimed - guess what - most likely you have just discovered a memory leak in your code. If all the local variables/objects were destroyed you should normally get all of the general and GPU RAM reclaimed in a well-behaved code.
+If you haven't asked for any local variables to be saved via `keep_var_names()` and if the process finished with big chunks of memory un-reclaimed - guess what - most likely you have just discovered a memory leak in your code. If all the local variables/objects were destroyed you should normally get all of the general and GPU RAM reclaimed in a well-behaved code. But make sure you read the [caveats section](#Caveats).
 
-You do need to be aware that some frameworks consume a big chunk of general and GPU RAM when they are used for the first time. For example `pytorch` `cuda` [eats up](
-https://docs.fast.ai/dev/gpu.html#unusable-gpu-ram-per-process) about 0.5GB of GPU RAM and 2GB of general RAM on load (not necessarily on `import`, but usually later when it's used), so if your experiment started with doing a `cuda` action for the first time in a given process, expect to lose that much RAM - this one can't be reclaimed.
+You do need to be aware that CUDA and the python framework consume a big chunk of general and GPU RAM when they are used for the first time. The CUDA context allocation seems to be dependent on which card is used and CUDA-version. For example, as of this writing, when CUDA 10.0 is used with GeForce GTX 1070 Ti (8GB), it eats up about 0.5GB of GPU RAM and 2GB of general RAM on its first use, so if your experiment started with doing a CUDA action for the first time in a given process, expect to lose that much RAM - this one can't be reclaimed.
 
-But `IPyExperimentsPytorch` does all this for you, for example, preloading `pytorch` `cuda` if the `pytorch` backend (default) is used. During the preloading it internally does:
+But `IPyExperimentsPytorch` does all this for you, for example, preloading `pytorch` `cuda` if the `pytorch` backend is used. During the preloading it internally does:
 
    ```python
    import pytorch
