@@ -5,7 +5,7 @@
 
 
 
-## 0.1.9.dev0 (Work In Progress)
+## 0.1.9 (2019-01-15)
 
 - integrate IPyGPULogger as a subsystem (renamed to CellLogger), so now there is no need to install and manage two modules that share a lot of similarities.
 
