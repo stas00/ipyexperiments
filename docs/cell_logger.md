@@ -9,13 +9,14 @@ See [this demo notebook](https://github.com/stas00/ipyexperiments/blob/master/de
 1. Initiate the subsystem:
    ```python
    exp = IPyExperimentsPytorch(cl_enable=True, cl_compact=False, cl_gc_collect=True)
+   # exp.cl is the subsystem object
    ```
-   Options:
+   Parameters:
    * `cl_enable` - enable the subsystem
    * `cl_compact` - use compact one line printouts
-   * `cl_gc_collect` - correct memory usage reports. Don't use when tracking memory leaks (objects with circular reference).
+   * `cl_gc_collect` - get correct memory usage reports. Don't use when tracking memory leaks (objects with circular reference).
 
-   Pass `enable=False` to disable to parent IPyExperiments system, if you just want to get the per cell/line logging.
+   If you just want to get the per cell/line logging, pass `exp_enable=False` to disable the parent `IPyExperiments` system,
 
 2. Start logging if it wasn't started in the constructor, or manually stopped via `.stop()`:
    ```python
@@ -27,7 +28,7 @@ See [this demo notebook](https://github.com/stas00/ipyexperiments/blob/master/de
    exp.cl.stop()
    ```
 
-4. Access the measured data directly (in not rounded MBs)
+4. Access the measured data directly (in exact bytes)
    ```python
    cpu_mem, gpu_mem, time_data = exp.cl.data
    print(cpu_mem)
@@ -55,6 +56,8 @@ See [this demo notebook](https://github.com/stas00/ipyexperiments/blob/master/de
    ```
 
 Please refer to the [demo notebook](https://github.com/stas00/ipyexperiments/blob/master/demo_cl.ipynb) to see this API in action.
+
+The main API is documented [here](./ipyexperiments.md#API)
 
 
 ## Peak Memory Usage

@@ -73,11 +73,14 @@ from ipyexperiments import IPyExperimentsPytorch
    ```python
    exp1 = IPyExperimentsCPU()
    ```
-   More backends will be supported in the future.
+   More backends can be supported in the future.
+
+   Parameters:
+   * `exp_enable=True`  - set to `False` to run only the sub-system
 
    It's very important that the variables used in the scope of the experiment are unique and haven't been defined before (technically, they shouldn't be in `locals()`), because otherwise they won't get cleared out. For more details, see: [Caveats](#caveats).
 
-2. Get experiment's data so far:
+2. Get experiment's data so far (in bytes):
    ```python
    exp1 = IPyExperimentsCPU()
    cpu_data = exp1.data
@@ -159,6 +162,8 @@ from ipyexperiments import IPyExperimentsPytorch
    ```
 
 Please refer to the [demo notebook](https://github.com/stas00/ipyexperiments/blob/master/demo.ipynb) to see this API in action.
+
+The subsystem API is documented [here](./cell_logger.md#API)
 
 
 ## Memory Leak Detection and Framework Preloading
