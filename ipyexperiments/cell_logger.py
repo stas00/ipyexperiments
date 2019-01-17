@@ -149,9 +149,9 @@ class CellLogger():
         else:
             pre = '･ '
             print(f"{pre}RAM: △Consumed △Peaked  Used Total | Exec time {self.time_delta:0.3f}s")
-            print(f"{pre}CPU:     {b2mb(self.cpu_mem_used_delta):5.0f}   {b2mb(self.cpu_mem_peaked_delta):5.0f}    {b2mb(self.cpu_mem_used_new):5.0f} MB   |")
+            print(f"{pre}CPU:     {b2mb(self.cpu_mem_used_delta):5.0f}   {b2mb(self.cpu_mem_peaked_delta):5.0f}    {b2mb(self.cpu_mem_used_new):5.0f} MB |")
             if self.exp.backend != 'cpu':
-                print(f"{pre}GPU:     {b2mb(self.gpu_mem_used_delta):5.0f}   {b2mb(self.gpu_mem_peaked_delta):5.0f}    {b2mb(self.gpu_mem_used_new):5.0f} MB   |")
+                print(f"{pre}GPU:     {b2mb(self.gpu_mem_used_delta):5.0f}   {b2mb(self.gpu_mem_peaked_delta):5.0f}    {b2mb(self.gpu_mem_used_new):5.0f} MB |")
 
         # for self.data accessor
         self.cpu_mem_used_prev = self.cpu_mem_used_new
