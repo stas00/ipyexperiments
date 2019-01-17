@@ -21,7 +21,7 @@ The idea behind this module is very simple - it implements a python function-lik
 
 If you need a more fine-grained memory profiling, the `CellLogger` sub-system reports RAM usage on a per cell-level when used with jupyter or per line of code in ipython.  You get the resource usage report automatically as soon as a command or a cell finished executing.
 
-Currently this sub-system logs GPU RAM, general RAM and execution time. But can be expanded to track other important thing. While there are various similar loggers out there, the main focus of this implementation is to help track GPU, whose main scarce resource is GPU RAM.
+Currently this sub-system logs GPU RAM, general RAM and execution time. But it can be expanded to track other important things. While there are various similar loggers out there, the main focus of this implementation is to help track GPU, whose main scarce resource is GPU RAM.
 
 ![Usage demo](https://raw.githubusercontent.com/stas00/ipyexperiments/master/docs/images/usage1.png)
 
