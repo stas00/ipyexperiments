@@ -3,7 +3,7 @@
 
 ## 0.1.10.dev0 (Work In Progress)
 
--
+- exp.data and exp.cl.data now both return namedtuples for the top-level entries, so it'll be easier to extend features in the future - documenting only the dictionary access, instead of raw tuples.
 
 
 ## 0.1.9 (2019-01-15)

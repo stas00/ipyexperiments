@@ -12,6 +12,7 @@ def b2mb(x): return int(x/2**20)
 
 CellLoggerMemory = namedtuple('CellLoggerMemory', ['used_delta', 'peaked_delta', 'used_total'])
 CellLoggerTime   = namedtuple('CellLoggerTime', ['time_delta'])
+CellLoggerData   = namedtuple('CellLoggerData', ['cpu', 'gpu', 'time'])
 
 # all the memory measurements functions come from IPyExperiments subclasses
 class CellLogger():
@@ -49,7 +50,11 @@ class CellLogger():
         #self.input_cells = self.ipython.user_ns['In']
 
         # set at the end of post_run_cell to be read in the subsequent cell
-        self.data = (CellLoggerMemory(0, 0, 0), CellLoggerMemory(0, 0, 0), CellLoggerTime(0))
+        self.data = CellLoggerData(
+            CellLoggerMemory(0, 0, 0),
+            CellLoggerMemory(0, 0, 0),
+            CellLoggerTime(0)
+        )
 
     def start(self):
         """Register memory profiling tools to IPython instance."""
@@ -158,10 +163,11 @@ class CellLogger():
         if self.exp.backend != 'cpu':
             self.gpu_mem_used_prev = self.gpu_mem_used_new
 
-        self.data = (CellLoggerMemory(self.cpu_mem_used_delta, self.cpu_mem_peaked_delta, self.cpu_mem_used_prev),
-                     CellLoggerMemory(self.gpu_mem_used_delta, self.gpu_mem_peaked_delta, self.gpu_mem_used_prev),
-                     CellLoggerTime(self.time_delta)
-                     )
+        self.data = CellLoggerData(
+            CellLoggerMemory(self.cpu_mem_used_delta, self.cpu_mem_peaked_delta, self.cpu_mem_used_prev),
+            CellLoggerMemory(self.gpu_mem_used_delta, self.gpu_mem_peaked_delta, self.gpu_mem_used_prev),
+            CellLoggerTime(self.time_delta)
+        )
 
 
     def peak_monitor_func(self):

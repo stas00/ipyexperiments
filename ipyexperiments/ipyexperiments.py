@@ -13,6 +13,7 @@ logger.setLevel(logging.ERROR)
 #logger.setLevel(logging.DEBUG)
 
 IPyExperimentMemory = namedtuple('IPyExperimentMemory', ['consumed', 'reclaimed', 'available'])
+IPyExperimentData   = namedtuple('IPyExperimentData', ['cpu', 'gpu'])
 
 process = psutil.Process(os.getpid())
 
@@ -149,10 +150,15 @@ class IPyExperiments():
     def _data_format(self, cpu_ram_avail, cpu_ram_cons, cpu_ram_recl,
                            gpu_ram_avail, gpu_ram_cons, gpu_ram_recl):
         if self.backend == 'cpu':
-            return (IPyExperimentMemory(cpu_ram_cons, cpu_ram_recl, cpu_ram_avail))
+            return IPyExperimentData(
+                IPyExperimentMemory(cpu_ram_cons, cpu_ram_recl, cpu_ram_avail),
+                IPyExperimentMemory(0, 0, 0)
+            )
         else:
-            return (IPyExperimentMemory(cpu_ram_cons, cpu_ram_recl, cpu_ram_avail),
-                    IPyExperimentMemory(gpu_ram_cons, gpu_ram_recl, gpu_ram_avail))
+            return IPyExperimentData(
+                IPyExperimentMemory(cpu_ram_cons, cpu_ram_recl, cpu_ram_avail),
+                IPyExperimentMemory(gpu_ram_cons, gpu_ram_recl, gpu_ram_avail)
+            )
 
     @property
     def data(self):

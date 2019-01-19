@@ -83,14 +83,15 @@ from ipyexperiments import IPyExperimentsPytorch
 2. Get experiment's data so far (in bytes):
    ```python
    exp1 = IPyExperimentsCPU()
-   cpu_data = exp1.data
+   cpu_data = exp1.data.cpu
 
    exp2 = IPyExperimentsPytorch()
-   cpu_data, gpu_data = exp2.data
+   cpu_data = exp2.data.cpu
+   gpu_data = exp2.data.gpu
    ```
-   `IPyExperimentsPytorch`'s `data` returns cpu data, and gpu data entries.   `IPyExperimentsCPU`'s `data` returns just cpu data.
+   The data object is an `IPyExperimentData` named tuple, which in turn contains 2 `IPyExperimentMemory` named tuples.
 
-   The data objects are `IPyExperimentMemory` named tuples, so you can access them as a normal tuple or via its named accessors.
+   It's recommended to use the name accessors and not expand data into normal tuples, since future version may change the order and add/remove other data.
 
    ```python
    print(cpu_data, gpu_data)
@@ -120,7 +121,9 @@ from ipyexperiments import IPyExperimentsPytorch
 4. Finish the experiment, delete newly defined local variables, reclaim memory. Return and print the final data:
 
    ```python
-   cpu_data_final, gpu_data_final = exp1.finish() # finish experiment
+   data = exp1.finish() # finish experiment
+   cpu_data_final = data.cpu
+   gpu_data_final = data.gpu
    print("\nNumerical data:\n", cpu_data_final, gpu_data_final)
    ```
    prints:
@@ -133,7 +136,7 @@ from ipyexperiments import IPyExperimentsPytorch
    ```python
    del exp1
    ```
-   If you re-run the experiment without either calling `exp1.finish()` or `del exp1`, e.g. if you decided to abort it half-way to the end, or say you hit "cuda: out of memory" error, then re-running the constructor `IPyExperimentsPytorch()` assigning to the same experiment object, will trigger a destructor first. This will delete the new local variables created until that point, reclaim memory and the previous experiment's report will be printed first.
+   If you re-run the experiment without either calling `exp1.finish()` or `del exp1`, e.g. if you decided to abort it half-way to the end, or say you hit "cuda: out of memory" error, then re-running the constructor `IPyExperimentsPytorch()` assigning to the same experiment object, will trigger a destructor first. This will delete the new local variables created until that point, reclaim memory and the previous experiment's finishing report will be printed first.
 
    If the memory report doesn't have the memory fully reclaimed, make sure to check the finish report to see that all the variables got deleted:
 

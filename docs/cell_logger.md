@@ -30,7 +30,10 @@ See [this demo notebook](https://github.com/stas00/ipyexperiments/blob/master/de
 
 4. Access the measured data directly (in exact bytes)
    ```python
-   cpu_mem, gpu_mem, time_data = exp.cl.data
+   data = exp.cl.data
+   cpu_mem   = data.cpu
+   gpu_mem   = data.gpu
+   time_data = data.time
    print(cpu_mem)
    print(gpu_mem)
    print(time_data)
@@ -42,22 +45,19 @@ See [this demo notebook](https://github.com/stas00/ipyexperiments/blob/master/de
    CellLoggerMemory(used_delta=1024, peaked_delta=1024, used_total=3184)
    CellLoggerTime(time_delta=0.806537389755249)
    ```
-   This accessor returns 3 `namedtuple`s, so that you can access the data fields by name. For example, continuing from above.
+   The data accessor returns `CellLoggerData` named tuple, which currently contains
+   3 other `namedtuple`s, so that you can access the data fields by name. For example, continuing from above.
 
    ```python
    print(cpu_mem.used_delta)
    print(gpu_mem.used_total)
    print(time_data.time_delta)
    ```
-   or to unpack it:
-   ```python
-   cpu_mem_used_delta, cpu_mem_peaked_delta, cpu_mem_used_total = cpu_mem
-   gpu_mem_used_delta, gpu_mem_peaked_delta, gpu_mem_used_total = gpu_mem
-   ```
+   It's recommended to use the name accessors and not expand data into normal tuples, since future version may change the order and add/remove other data.
 
 Please refer to the [demo notebook](https://github.com/stas00/ipyexperiments/blob/master/demo_cl.ipynb) to see this API in action.
 
-The main API is documented [here](./ipyexperiments.md#API)
+The main system's API is documented [here](./ipyexperiments.md#API)
 
 
 ## Peak Memory Usage
