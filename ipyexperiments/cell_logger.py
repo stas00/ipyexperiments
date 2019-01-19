@@ -1,4 +1,4 @@
-import time, psutil, gc, tracemalloc, threading, weakref
+import time, psutil, gc, tracemalloc, threading, weakref, datetime
 import logging
 from collections import namedtuple
 from IPython import get_ipython
@@ -9,6 +9,10 @@ logger.setLevel(logging.ERROR)
 #logger.setLevel(logging.DEBUG)
 
 def b2mb(x): return int(x/2**20)
+def secs2time(secs):
+    " secs to time, secs rounded to 3 decimals "
+    msec = int(abs(secs-int(secs))*1000)
+    return f'{datetime.timedelta(seconds=int(secs))}.{msec:03d}'
 
 CellLoggerMemory = namedtuple('CellLoggerMemory', ['used_delta', 'peaked_delta', 'used_total'])
 CellLoggerTime   = namedtuple('CellLoggerTime', ['time_delta'])
@@ -149,11 +153,11 @@ class CellLogger():
             out = f"CPU: {b2mb(self.cpu_mem_used_delta):0.0f}/{b2mb(self.cpu_mem_peaked_delta):0.0f}/{b2mb(self.cpu_mem_used_new):0.0f} MB"
             if self.exp.backend != 'cpu':
                 out += f" | GPU: {b2mb(self.gpu_mem_used_delta):0.0f}/{b2mb(self.gpu_mem_peaked_delta):0.0f}/{b2mb(self.gpu_mem_used_new):0.0f} MB"
-            out += f" | Time {self.time_delta:0.3f}s | (Consumed/Peaked/Used Total)"
+            out += f" | Time {secs2time(self.time_delta)} | (Consumed/Peaked/Used Total)"
             print(out)
         else:
             pre = '･ '
-            print(f"{pre}RAM: △Consumed △Peaked  Used Total | Exec time {self.time_delta:0.3f}s")
+            print(f"{pre}RAM: △Consumed △Peaked  Used Total | Exec time {secs2time(self.time_delta)}")
             print(f"{pre}CPU:     {b2mb(self.cpu_mem_used_delta):5.0f}   {b2mb(self.cpu_mem_peaked_delta):5.0f}    {b2mb(self.cpu_mem_used_new):5.0f} MB |")
             if self.exp.backend != 'cpu':
                 print(f"{pre}GPU:     {b2mb(self.gpu_mem_used_delta):5.0f}   {b2mb(self.gpu_mem_peaked_delta):5.0f}    {b2mb(self.gpu_mem_used_new):5.0f} MB |")
