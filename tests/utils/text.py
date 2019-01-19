@@ -5,9 +5,21 @@
 # """)
 
 import numpy as np
-import torch
-import re
+import torch, pynvml
+import re, gc
 from math import isclose
+
+############## ram allocation helpers #################
+
+pynvml.nvmlInit()
+id = torch.cuda.current_device()
+
+def gpu_ram_free():
+    gc.collect()
+    torch.cuda.empty_cache()
+    handle = pynvml.nvmlDeviceGetHandleByIndex(id)
+    info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+    return int( info.free / 2**20 )
 
 def consume_cpu_ram(n): return np.ones((n, n))
 def consume_gpu_ram(n): return torch.ones((n, n)).cuda()
@@ -15,13 +27,61 @@ def consume_cpu_ram_128mb():  return consume_cpu_ram(2**12)
 def consume_gpu_ram_256mb():  return consume_gpu_ram(2**13)
 def consume_gpu_ram_1024mb(): return consume_gpu_ram(2**14)
 
+def consume_gpu_ram_mbs(n, fatal=False):
+    " allocate n MBs, return the var holding it on success, None on failure "
+    if n < 6: return None # don't try to allocate less than 6MB
+    try:
+        d = int(2**9*n**0.5)
+        return torch.ones((d, d)).cuda().contiguous()
+    except Exception as e:
+        if not fatal: return None
+        raise e
 
-def check_defined(var_list, local_list):
-    for v in var_list: assert v in local_list, f"var {v} should exist in locals()"
+def gpu_ram_leave_free_mbs(n):
+    " consume whatever memory is needed so that n MBs are left free "
+    avail = gpu_ram_free()
+    assert avail > n, f"already have less available mem than desired {n}MBs"
+    consume = avail - n
+    print(f"consuming {consume}MB to bring free mem to {n}MBs")
+    return consume_gpu_ram_mbs(consume, fatal=True)
 
-def check_undefined(var_list, local_list):
-    for v in var_list: assert v not in local_list, f"var {v} should not exist in locals()"
 
+
+############## var helpers #################
+
+import inspect
+def get_callers_locals():
+    """Get the local() in the caller's caller's frame (2 frames up)."""
+    frame = inspect.currentframe()
+    locals = {}
+    try:
+        locals = (frame.f_back.f_back.f_locals)
+    finally:
+        del frame
+    return locals
+
+def locals_unset(var_names):
+    """ unsetting the used in the cell local vars is useful
+    * at the very beginning of the cell, which helps with re-running the same cell over and over again (e.g. if there are heavy GPU RAM vars)
+    * at the very end of the cell, not to impact following cells if cells are run in sequences (primarily useful for tests)
+    """
+    l = get_callers_locals()
+    for v in var_names:
+        if v in l: del l[v]
+
+def check_defined(var_names):
+    " check whether the global var names are defined "
+    l = get_callers_locals()
+    for v in var_names: assert v in l,     f"var {v} should exist in locals()"
+
+def check_undefined(var_names):
+    " check whether the global var names are not defined "
+    l = get_callers_locals()
+    for v in var_names: assert v not in l, f"var {v} should not exist in locals()"
+
+
+
+############## print helpers #################
 
 def print_output(output):
     if output:

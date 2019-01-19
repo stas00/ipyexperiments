@@ -1,3 +1,3 @@
 # TODO
 
-- switch the general RAM calculation to use tracemalloc, since it overcomes the issue of python internal caching
+- Exec time 2418.641s should be formatted min:sec
