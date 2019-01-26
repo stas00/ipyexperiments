@@ -3,7 +3,7 @@
 
 
 
-## 0.1.11.dev0 (Work In Progress)
+## 0.1.11 (2019-01-25)
 
 - add `ipyexperiments.utils.ipython` module with workaround for ipython memory leak on exception problem.
 - add `ipyexperiments.utils.mem` module with memory debug helper utils.
