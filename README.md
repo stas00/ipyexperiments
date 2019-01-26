@@ -7,11 +7,21 @@
 
 # ipyexperiments
 
-jupyter/ipython experiment containers for profiling and reclaiming GPU and general RAM , and detecting memory leaks.
+jupyter/ipython experiment containers and utils for profiling and reclaiming GPU and general RAM, and detecting memory leaks.
 
 ## About
 
 This module's main purpose is to help calibrate hyper parameters in deep learning notebooks to fit the available GPU and General RAM, but, of course, it can be useful for any other use where memory limits is a constant issue. It is also useful for detecting memory leaks in your code.
+
+This package is slowly evolving into a suite of different helper modules that are designed to help diagnose issues with memory leakages and make the debug of these easy.
+
+Currently the package contains several modules:
+
+1. `IpyExperiments` - a smart container for ipython/jupyter experiments ([documentation](https://github.com/stas00/ipyexperiments/blob/master/docs/ipyexperiments.md))
+2. `CellLogger` - per cell memory profiler ([documentation](https://github.com/stas00/ipyexperiments/blob/master/docs/cell_logger.md))
+3. `ipython` utils - workarounds for ipython memory leakage on exception ([documentation](https://github.com/stas00/ipyexperiments/blob/master/docs/utils_ipython.md))
+4. `mem` debug/profiling utils ([documentation](https://github.com/stas00/ipyexperiments/blob/master/docs/utils_mem.md))
+
 
 Using this framework you can run multiple consequent experiments without needing to restart the kernel all the time, especially when you run out of GPU memory - the familiar to all "cuda: out of memory" error. When this happens you just go back to the notebook cell where you started the experiment, change the hyper parameters, and re-run the updated experiment until it fits the available memory. This is much more efficient and less error-prone then constantly restarting the kernel, and re-running the whole notebook.
 
@@ -70,6 +80,8 @@ See [this demo notebook](https://github.com/stas00/ipyexperiments/blob/master/de
 
 1. [IPyExperiments](https://github.com/stas00/ipyexperiments/blob/master/docs/ipyexperiments.md).
 2. [CellLogger sub-system](https://github.com/stas00/ipyexperiments/blob/master/docs/cell_logger.md)
+3. [ipython utils](https://github.com/stas00/ipyexperiments/blob/master/docs/utils_ipython.md)
+4. [mem debug/profiling utils](https://github.com/stas00/ipyexperiments/blob/master/docs/utils_mem.md)
 
 
 ## Contributing
