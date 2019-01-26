@@ -4,7 +4,7 @@
 
 This module includes helper utilities for memory management in the ipython/jupyter environment.
 
-Currently, the main functions are to provide workaround solutions for memory leakage on exception under ipython/jupyter.
+Currently, the main functions are to provide workaround solutions for [memory leakage on exception under ipython/jupyter](https://github.com/ipython/ipython/pull/11572).
 
 ## API
 ```
