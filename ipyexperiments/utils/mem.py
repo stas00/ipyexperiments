@@ -23,13 +23,10 @@ except:
 
 GPUMemory = namedtuple('GPUMemory', ['total', 'used', 'free'])
 
-
 def preload_pytorch():
     torch.ones((1, 1)).cuda()
 
-
 preload_pytorch()  # needed to run first to get the measurements right
-
 
 def gpu_mem_allocate_mbs(n):
     " allocate n MBs, return the var holding it on success, None on failure "
@@ -39,7 +36,6 @@ def gpu_mem_allocate_mbs(n):
     except:
         return None
 
-
 def b2mb(num):
     """ convert Bs to MBs and round down """
     return int(num/2**20)
@@ -47,8 +43,6 @@ def b2mb(num):
 # for gpu returns GPUMemory(total, used, free)
 # for cpu returns GPUMemory(0, 0, 0)
 # for invalid gpu id returns GPUMemory(0, 0, 0)
-
-
 def gpu_mem_get_mbs(id=None):
     "query nvidia for total, used and free memory for gpu in MBs. if id is not passed, currently selected torch device is used"
     if not have_cuda:
@@ -62,15 +56,9 @@ def gpu_mem_get_mbs(id=None):
     except:
         return GPUMemory(0, 0, 0)
 
-
-def gpu_mem_get_free_mbs(): return gpu_mem_get_mbs().free
-
-
-def gpu_mem_get_used_mbs(): return gpu_mem_get_mbs().used
-
-
+def gpu_mem_get_free_mbs():  return gpu_mem_get_mbs().free
+def gpu_mem_get_used_mbs():  return gpu_mem_get_mbs().used
 def gpu_mem_get_total_mbs(): return gpu_mem_get_mbs().total
-
 
 def gpu_mem_leave_free_mbs(n):
     """Consume whatever memory is needed so that n MBs are left free.
