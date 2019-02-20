@@ -1,6 +1,5 @@
 "Monkey patch to use pynvml api on mac os through pynvx"
 
-
 def get_pynvml():
     import platform
     from collections import namedtuple
@@ -39,4 +38,3 @@ def get_pynvml():
                 raise Exception(f"{e}\nYou need to install the nvidia-ml-py3 module; pip install nvidia-ml-py3")
 
     return pynvml_i
-
