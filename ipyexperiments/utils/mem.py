@@ -1,16 +1,23 @@
 "Helper utility functions for memory management"
 
-import pynvml, threading, time
+import threading
+import time
 from collections import namedtuple
+from .inject_pynvx import get_pynvml
 
+pynvml = None
 have_cuda = 0
+
 try:
     # currently relying on pytorch
     import torch
+
+    pynvml = get_pynvml()
     pynvml.nvmlInit()
     have_cuda = 1
 except:
-    raise RuntimeError("these functions require NVIDIA environment, check the output of `nvidia-smi`") from None
+    raise RuntimeError(
+        "these functions require NVIDIA environment, check the output of `nvidia-smi`") from None
 
 ############# gpu memory helper functions ############
 
@@ -19,7 +26,7 @@ GPUMemory = namedtuple('GPUMemory', ['total', 'used', 'free'])
 def preload_pytorch():
     torch.ones((1, 1)).cuda()
 
-preload_pytorch() # needed to run first to get the measurements right
+preload_pytorch()  # needed to run first to get the measurements right
 
 def gpu_mem_allocate_mbs(n):
     " allocate n MBs, return the var holding it on success, None on failure "
@@ -38,8 +45,10 @@ def b2mb(num):
 # for invalid gpu id returns GPUMemory(0, 0, 0)
 def gpu_mem_get_mbs(id=None):
     "query nvidia for total, used and free memory for gpu in MBs. if id is not passed, currently selected torch device is used"
-    if not have_cuda: return GPUMemory(0, 0, 0)
-    if id is None: id = torch.cuda.current_device()
+    if not have_cuda:
+        return GPUMemory(0, 0, 0)
+    if id is None:
+        id = torch.cuda.current_device()
     try:
         handle = pynvml.nvmlDeviceGetHandleByIndex(id)
         info = pynvml.nvmlDeviceGetMemoryInfo(handle)

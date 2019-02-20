@@ -9,8 +9,9 @@ def to_list(buffer): return list(filter(None, map(str.strip, buffer.splitlines()
 
 requirements = to_list("""
   ipython
-  nvidia-ml-py3
+  nvidia-ml-py3;platform_system!="Darwin"
   psutil
+  pynvx;platform_system=="Darwin"
 """)
 
 setup_requirements = ['pytest-runner']
