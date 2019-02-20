@@ -7,8 +7,8 @@
 
 ## 0.1.12.dev0 (Work In Progress)
 
-- 
-
+- use pynvx as pynvml replacement on mac OS (@phenomax)
+- switched GPUMemory tuple order to be consistent with nvidia meminfo
 
 ## 0.1.11 (2019-01-25)
 

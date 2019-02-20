@@ -21,7 +21,7 @@ except:
 
 ############# gpu memory helper functions ############
 
-GPUMemory = namedtuple('GPUMemory', ['total', 'used', 'free'])
+GPUMemory = namedtuple('GPUMemory', ['total', 'free', 'used'])
 
 def preload_pytorch():
     torch.ones((1, 1)).cuda()
@@ -40,7 +40,7 @@ def b2mb(num):
     """ convert Bs to MBs and round down """
     return int(num/2**20)
 
-# for gpu returns GPUMemory(total, used, free)
+# for gpu returns GPUMemory(total, free, used)
 # for cpu returns GPUMemory(0, 0, 0)
 # for invalid gpu id returns GPUMemory(0, 0, 0)
 def gpu_mem_get_mbs(id=None):
@@ -52,7 +52,7 @@ def gpu_mem_get_mbs(id=None):
     try:
         handle = pynvml.nvmlDeviceGetHandleByIndex(id)
         info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-        return GPUMemory(*(map(b2mb, [info.total, info.used, info.free])))
+        return GPUMemory(*(map(b2mb, [info.total, info.free, info.used])))
     except:
         return GPUMemory(0, 0, 0)
 
