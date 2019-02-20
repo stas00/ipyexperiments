@@ -5,12 +5,14 @@
 # """)
 
 import numpy as np
-import torch, pynvml
+import torch
 import re, gc
 from math import isclose
+from ipyexperiments.utils.inject_pynvx import get_pynvml
 
 ############## ram allocation helpers #################
 
+pynvml = get_pynvml()
 pynvml.nvmlInit()
 id = torch.cuda.current_device()
 

@@ -3,6 +3,7 @@ __all__ = ['IPyExperimentsCPU', 'IPyExperimentsPytorch']
 from .cell_logger import CellLogger
 import gc, os, sys, time, psutil, weakref
 import logging
+import platform
 from IPython import get_ipython
 from IPython.core.magics.namespace import NamespaceMagics # Used to query namespace.
 from collections import namedtuple
@@ -331,14 +332,10 @@ class IPyExperimentsGPU(IPyExperimentsCPU):
     def backend_init(self):
         super().backend_init()
 
-        try:
-            import pynvml
-        except Exception as e:
-            raise Exception(f"{e}\nYou need to install the nvidia-ml-py3 module; pip install nvidia-ml-py3")
+        from ipyexperiments.utils.inject_pynvx import get_pynvml
 
-        # initialize pynvml
-        self.pynvml = pynvml
-        pynvml.nvmlInit()
+        self.pynvml = get_pynvml()
+        self.pynvml.nvmlInit()
 
     #def start(self):
     #    #print("Starting IPyExperimentsGPU")
