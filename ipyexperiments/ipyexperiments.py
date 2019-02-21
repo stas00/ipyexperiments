@@ -223,16 +223,29 @@ class IPyExperiments():
         # them, with the exception of those we were told to preserve
         var_names_new = list(set(var_names_cur) - set(self.var_names_start) - set(self.var_names_keep))
         var_names_deleted = []
+        var_names_failed_delete = []
         for x in var_names_new:
-            # make sure not to delete objects of the same type as self (previous
-            # instances of the same)
-            if type(self.namespace.shell.user_ns[x]) != type(self):
-                var_names_deleted.append(x)
-                self.namespace.xdel(x)
+            # seems that some vars can disappear, so we need to check they are still there
+            if x in self.namespace.shell.user_ns:
+                # make sure not to delete objects of the same type as self (previous
+                # instances of the same)
+                if type(self.namespace.shell.user_ns[x]) != type(self):
+                    # and even then it sometimes fails
+                    try:
+                        self.namespace.xdel(x)
+                        var_names_deleted.append(x)
+                    except:
+                        #print(f"failed to delete {x}: xdel")
+                        var_names_failed_delete.append(x)
+            else:
+                #print(f"failed to delete {x}, not in user_ns")
+                var_names_failed_delete.append(x)
         if self.var_names_keep or var_names_deleted:
             print("\n*** Newly defined local variables:")
             if var_names_deleted:
                 print("Deleted:", ", ".join(sorted(var_names_deleted)))
+            if var_names_failed_delete:
+                print("Failed to delete:", ", ".join(sorted(var_names_failed_delete)))
             if self.var_names_keep:
                 print("Kept:   ", ", ".join(sorted(self.var_names_keep)))
 
