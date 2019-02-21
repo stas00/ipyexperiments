@@ -65,13 +65,18 @@ class CellLogger():
         self.running = True
         logger.debug("CellLogger: Starting")
 
+        # this seem to be unreliable if the parent goes away, and the thread got
+        # delayed, so make a copy (can be removed once the thread is no longer
+        # needed in the code - needs pytorch to implement multiple peak mem counters)
+        self.backend = self.exp.backend
+
         # self.exp does it when needed
         #preload_pytorch()
 
         # initial measurements
         if self.gc_collect: gc.collect()
         self.cpu_mem_used_prev = self.exp.cpu_ram_used()
-        if self.exp.backend != 'cpu':
+        if self.backend != 'cpu':
             self.gpu_mem_used_prev = self.exp.gpu_ram_used()
 
         self.ipython.events.register("pre_run_cell",  self.pre_run_cell)
@@ -111,7 +116,7 @@ class CellLogger():
         # XXX: perhaps can be replaced with using torch.cuda.reset_max_cached_memory() once pytorch 1.0.1 is released, will need to check that pytorch ver >= 1.0.1
         #
         # this thread samples RAM usage as long as the current cell is running
-        if self.exp.backend != 'cpu':
+        if self.backend != 'cpu':
             self.peak_monitoring = True
             peak_monitor_thread = threading.Thread(target=self.peak_monitor_func)
             peak_monitor_thread.daemon = True
@@ -129,7 +134,7 @@ class CellLogger():
         logger.debug(f"post_run_cell: 1 f{self.exp}")
         self.time_delta = time.time() - self.time_start
 
-        if self.exp.backend != 'cpu':
+        if self.backend != 'cpu':
             self.peak_monitoring = False
 
         if self.gc_collect: gc.collect()
@@ -144,14 +149,14 @@ class CellLogger():
         self.cpu_mem_used_delta   = cpu_mem_used_delta
         self.cpu_mem_peaked_delta = max(0, cpu_mem_used_peak - cpu_mem_used_delta)
 
-        if self.exp.backend != 'cpu':
+        if self.backend != 'cpu':
             self.gpu_mem_used_new     = self.exp.gpu_ram_used()
             self.gpu_mem_used_delta   = self.gpu_mem_used_new - self.gpu_mem_used_prev
             self.gpu_mem_peaked_delta = max(0, self.gpu_mem_used_peak - self.gpu_mem_used_new)
 
         if self.compact:
             out = f"CPU: {b2mb(self.cpu_mem_used_delta):0.0f}/{b2mb(self.cpu_mem_peaked_delta):0.0f}/{b2mb(self.cpu_mem_used_new):0.0f} MB"
-            if self.exp.backend != 'cpu':
+            if self.backend != 'cpu':
                 out += f" | GPU: {b2mb(self.gpu_mem_used_delta):0.0f}/{b2mb(self.gpu_mem_peaked_delta):0.0f}/{b2mb(self.gpu_mem_used_new):0.0f} MB"
             out += f" | Time {secs2time(self.time_delta)} | (Consumed/Peaked/Used Total)"
             print(out)
@@ -159,12 +164,12 @@ class CellLogger():
             pre = '･ '
             print(f"{pre}RAM: △Consumed △Peaked  Used Total | Exec time {secs2time(self.time_delta)}")
             print(f"{pre}CPU:     {b2mb(self.cpu_mem_used_delta):5.0f}   {b2mb(self.cpu_mem_peaked_delta):5.0f}    {b2mb(self.cpu_mem_used_new):5.0f} MB |")
-            if self.exp.backend != 'cpu':
+            if self.backend != 'cpu':
                 print(f"{pre}GPU:     {b2mb(self.gpu_mem_used_delta):5.0f}   {b2mb(self.gpu_mem_peaked_delta):5.0f}    {b2mb(self.gpu_mem_used_new):5.0f} MB |")
 
         # for self.data accessor
         self.cpu_mem_used_prev = self.cpu_mem_used_new
-        if self.exp.backend != 'cpu':
+        if self.backend != 'cpu':
             self.gpu_mem_used_prev = self.gpu_mem_used_new
 
         self.data = CellLoggerData(
