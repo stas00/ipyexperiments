@@ -1,7 +1,7 @@
 # Changes
 
 
-## 0.1.13.dev0 (Work In Progress)
+## 0.1.13 (2019-02-22)
 
 - fix MANIFEST.in to include project sub-dirs
 
