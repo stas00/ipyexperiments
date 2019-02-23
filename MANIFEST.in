@@ -1,10 +1,15 @@
-include CONTRIBUTING.rst
-include HISTORY.rst
+include AUTHORS.md
+include CONTRIBUTING.md
+include CHANGES.md
 include LICENSE
-include README.rst
+include README.md
 
-recursive-include tests *
-recursive-exclude * __pycache__
-recursive-exclude * *.py[co]
+# include recursively
+graft ipyexperiments
+graft docs
 
-recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
+# exclude recursively
+prune tests
+
+# exclude matching extensions
+global-exclude *.py[co]

@@ -3,7 +3,7 @@
 
 ## 0.1.13.dev0 (Work In Progress)
 
--
+- fix MANIFEST.in to include project sub-dirs
 
 
 ## 0.1.12 (2019-02-22)
