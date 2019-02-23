@@ -84,23 +84,9 @@ See [this demo notebook](https://github.com/stas00/ipyexperiments/blob/master/de
 4. [mem debug/profiling utils](https://github.com/stas00/ipyexperiments/blob/master/docs/utils_mem.md)
 
 
-## Contributing
+## Contributing and Testing
 
-PRs with improvements and new features and Issues with suggestions are welcome.
-
-If you work with `tensorflow`, please, consider sending a PR to support it - by mimicking the `IPyExperimentsPytorch` implementation.
-
-## Testing
-
-1. Install my fork of `pytest-ipynb` (the original one is no longer being maintained)
-   ```
-   pip install git+https://github.com/stas00/pytest-ipynb.git
-   ```
-2. Run the test suite
-   ```
-   make test
-   ```
-
+Please see [CONTRIBUTING.md](https://github.com/stas00/ipyexperiments/blob/master/CONTRIBUTING.md).
 
 ## History
 
