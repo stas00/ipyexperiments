@@ -1,20 +1,14 @@
 # Changes
 
 
-
-
-
-
-
-
 ## 0.1.13.dev0 (Work In Progress)
 
-- 
+-
 
 
 ## 0.1.12 (2019-02-22)
 
-- use pynvx as pynvml replacement on mac OS (@phenomax)
+- use pynvx as pynvml replacement on mac OS (thanks @phenomax)
 - switched GPUMemory tuple order to be consistent with nvidia meminfo
 - handle the situation where a mem peak thread gets delayed to finish
 - some self.namespace.shell.user_ns vars disappear, so do a safe delete
