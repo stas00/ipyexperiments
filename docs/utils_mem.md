@@ -4,15 +4,59 @@
 
 This module includes helper utilities for memory diagnostics and debug.
 
+Currently these functions rely on pytorch, but can be ported to support other backends.
+
 # API
 ```
 from ipyexperiments.utils.mem import *
 ```
 ## gpu_mem_allocate_mbs
 
-`gpu_mem_allocate_mbs(n)`
+`gpu_mem_allocate_mbs(n, fatal=False)`
 
-Allocate `n` MBs. Return the variable holding the allocated memory on success, `None` on failure. There exact allocated memory may be slightly different in size, with 1MB tolerance.
+Try to allocate `n` MBs.
+
+Return the variable holding the allocated memory on success, `None` on failure. The exact allocated memory may be slightly different in size, within 1MB tolerance.
+
+Delete the variable to free up the memory.
+
+Currently returns `None` for `n>=6` (need a more precise way to allocate smaller amounts).
+
+`fatal=True` will throw an exception on failure to allocate (default is `False`).
+
+## gpu_mem_get_free_mbs
+
+`gpu_mem_get_free_mbs()`
+
+Return the amount of free memory (in rounded MBs)
+
+
+## gpu_mem_get_free_no_cache
+
+`gpu_mem_get_free_no_cache()`
+
+Return the amount of free memory after flushing caching (in rounded MBs)
+
+## gpu_mem_get_total_mbs
+
+`gpu_mem_get_total_mbs()`
+
+Return the amount of total memory (in rounded MBs)
+
+
+## gpu_mem_get_used_mbs
+
+`gpu_mem_get_used_mbs()`
+
+Return the amount of used memory (in rounded MBs)
+
+
+## gpu_mem_get_used_no_cache
+
+`gpu_mem_get_used_no_cache()`
+
+Return the amount of used memory after flushing caching (in rounded MBs)
+
 
 ## gpu_mem_leave_free_mbs
 
@@ -20,9 +64,9 @@ Allocate `n` MBs. Return the variable holding the allocated memory on success, `
 
 Consume whatever memory is needed so that `n` MBs are left free (approximately).
 
-On success it returns a variable that holds the allocated memory, which needs to be kept alive as long as it's needed to hold that memory. Call `del` to release the memory when that memory is no longer needed.
+On success it returns a variable that holds the allocated memory, which needs to be kept alive as long as it's needed to hold that memory. Call `del` to release the memory when it is no longer needed.
 
-This is very useful in tests/debug situations where the code needs to hit OOM, so this function will leave just the requested amount of GPU RAM free, regardless of GPU utilization or size of the card.
+This function is very useful in tests/debug situations where the code needs to hit OOM, so this function will leave just the requested amount of GPU RAM free, regardless of GPU utilization or size of the card.
 
 Since typically NVIDIA reports more free memory than it can actually allocate (often as little as 80% of it is actually allocatable) give your code enough of a margin not to get hit by this mismatch of the promised free memory and the reality.
 
@@ -35,3 +79,10 @@ from ipyexperiments.utils.mem import *
 gpu_mem_leave_free_mbs(100)
 # now run some code that uses up 100MB and causes CUDA OOM
 ```
+
+
+## preload_pytorch
+
+`preload_pytorch()`
+
+Do a small operation on CUDA to get the pytorch/cuda structures in place. A must to be run first if you're going to compare any CUDA-related numbers.

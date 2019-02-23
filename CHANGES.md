@@ -11,6 +11,7 @@
 - switched GPUMemory tuple order to be consistent with nvidia meminfo
 - handle the situation where a mem peak thread gets delayed to finish
 - some self.namespace.shell.user_ns vars disappear, so do a safe delete
+- expose/document more of `ipyexperiments.utils.mem` helper functions
 
 ## 0.1.11 (2019-01-25)
 

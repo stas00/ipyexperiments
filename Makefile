@@ -135,7 +135,7 @@ test: ## run tests with the default python
 	pytest
 
 test-cpu: ## run tests with the default python and CUDA_VISIBLE_DEVICES=""
-	CUDA_VISIBLE_DEVICES="" pytest
+	CUDA_VISIBLE_DEVICES="" pytest tests/*cpu*
 
 tools-update: ## install/update build tools
 	@echo "\n\n*** Updating build tools"

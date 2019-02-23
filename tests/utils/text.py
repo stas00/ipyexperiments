@@ -8,46 +8,14 @@ import numpy as np
 import torch
 import re, gc
 from math import isclose
-from ipyexperiments.utils.inject_pynvx import get_pynvml
 
 ############## ram allocation helpers #################
-
-pynvml = get_pynvml()
-pynvml.nvmlInit()
-id = torch.cuda.current_device()
-
-def gpu_ram_free():
-    gc.collect()
-    torch.cuda.empty_cache()
-    handle = pynvml.nvmlDeviceGetHandleByIndex(id)
-    info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-    return int( info.free / 2**20 )
 
 def consume_cpu_ram(n): return np.ones((n, n))
 def consume_gpu_ram(n): return torch.ones((n, n)).cuda()
 def consume_cpu_ram_128mb():  return consume_cpu_ram(2**12)
 def consume_gpu_ram_256mb():  return consume_gpu_ram(2**13)
 def consume_gpu_ram_1024mb(): return consume_gpu_ram(2**14)
-
-def consume_gpu_ram_mbs(n, fatal=False):
-    " allocate n MBs, return the var holding it on success, None on failure "
-    if n < 6: return None # don't try to allocate less than 6MB
-    try:
-        d = int(2**9*n**0.5)
-        return torch.ones((d, d)).cuda().contiguous()
-    except Exception as e:
-        if not fatal: return None
-        raise e
-
-def gpu_ram_leave_free_mbs(n):
-    " consume whatever memory is needed so that n MBs are left free "
-    avail = gpu_ram_free()
-    assert avail > n, f"already have less available mem than desired {n}MBs"
-    consume = avail - n
-    print(f"consuming {consume}MB to bring free mem to {n}MBs")
-    return consume_gpu_ram_mbs(consume, fatal=True)
-
-
 
 ############## var helpers #################
 
