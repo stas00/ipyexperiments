@@ -209,8 +209,10 @@ test-install: ## test conda/pip package by installing that version them
 	@perl -e '$$v=shift; $$p="ipyexperiments"; $$|++; sub ok {`conda search -c stason $$p==$$v >/dev/null 2>&1`; return $$? ? 0 : 1}; print "waiting for $$p-$$v to become available on conda\n"; $$c=0; while (not ok()) { print "\rwaiting: $$c secs"; $$c+=5;sleep 5; }; print "\n$$p-$$v is now available on conda\n"' $(version)
 
 	conda install -y -c fastai -c stason ipyexperiments==$(version)
-	@# leave conda package installed: conda uninstall -y ipyexperiments
+	conda uninstall -y ipyexperiments
 
+	@echo "\n\n*** Install editable version"
+	pip install -e .
 
 ##@ CHANGES.md file targets
 
