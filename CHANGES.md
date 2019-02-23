@@ -5,6 +5,13 @@
 
 
 
+
+
+## 0.1.13.dev0 (Work In Progress)
+
+- 
+
+
 ## 0.1.12 (2019-02-22)
 
 - use pynvx as pynvml replacement on mac OS (@phenomax)
