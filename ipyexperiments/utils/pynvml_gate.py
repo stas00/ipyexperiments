@@ -4,13 +4,11 @@ import platform
 
 def load_pynvml_env():
     "Imports pynvml bits according to the given platform and init it"
-    try:
-        import pynvml
-    except Exception as e:
-        raise Exception(f"{e}\npynvml is required: pip install nvidia-ml-py3")
+    import pynvml
 
     # on OSX we use pynvx with pynvml wrapper (still requires pynvml)
-    if  platform.system() == "Darwin":
+    # currently there is no conda pynvx package, hence the runtime check
+    if platform.system() == "Darwin":
         try:
             from pynvx import pynvml
         except Exception as e:
