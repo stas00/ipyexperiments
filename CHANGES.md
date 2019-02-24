@@ -4,7 +4,7 @@
 ## 0.1.14.dev0 (Work In Progress)
 
 - Delta Peaked calculation fixed in case of consumed memory being negative (released)
-
+- switch to pynvx's pynvml wrapper
 
 ## 0.1.13 (2019-02-22)
 

@@ -1,21 +1,19 @@
 "Helper utility functions for memory management"
 
+from ipyexperiments.utils.inject_pynvx import load_pynvml_env
 import threading, time, gc
 from collections import namedtuple
-from .inject_pynvx import get_pynvml
-
-pynvml = None
-use_gpu = 0
 
 try:
-    # currently relying on pytorch
-    import torch
-    use_gpu = torch.cuda.is_available()
+    import torch # currently relying on pytorch
+except Exception as e:
+    raise Exception(f"{e}\nYou need to install the torch module; pip install torch")
 
-    pynvml = get_pynvml()
-    pynvml.nvmlInit()
-except:
-    raise RuntimeError("these functions require NVIDIA environment, check the output of `nvidia-smi`") from None
+use_gpu = torch.cuda.is_available()
+if not use_gpu:
+    raise RuntimeError("these functions require CUDA environment; torch.cuda.is_available() returns false")
+
+pynvml = load_pynvml_env()
 
 ############# gpu memory helper functions ############
 

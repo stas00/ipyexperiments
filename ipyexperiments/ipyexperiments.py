@@ -1,9 +1,7 @@
 __all__ = ['IPyExperimentsCPU', 'IPyExperimentsPytorch']
 
 from .cell_logger import CellLogger
-import gc, os, sys, time, psutil, weakref
-import logging
-import platform
+import gc, os, sys, time, psutil, weakref, logging
 from IPython import get_ipython
 from IPython.core.magics.namespace import NamespaceMagics # Used to query namespace.
 from collections import namedtuple
@@ -19,13 +17,6 @@ IPyExperimentData   = namedtuple('IPyExperimentData', ['cpu', 'gpu'])
 process = psutil.Process(os.getpid())
 
 def b2mb(x): return int(x/2**20)
-
-# # light weight humanize from https://stackoverflow.com/a/1094933/9201239 w/ tweaks
-# def hs(num, suffix='B'):
-#     for unit in ['','K','M','G','T','P','E','Z']:
-#         if abs(num) < 1024.0: return "%3.1f %s%s" % (num, unit, suffix)
-#         num /= 1024.0
-#     return "%.1f %s%s" % (num, 'Y', suffix)
 
 class IPyExperiments():
     "Create an experiment with time/memory checkpoints"
@@ -345,10 +336,9 @@ class IPyExperimentsGPU(IPyExperimentsCPU):
     def backend_init(self):
         super().backend_init()
 
-        from ipyexperiments.utils.inject_pynvx import get_pynvml
+        from ipyexperiments.utils.inject_pynvx import load_pynvml_env
 
-        self.pynvml = get_pynvml()
-        self.pynvml.nvmlInit()
+        self.pynvml = load_pynvml_env()
 
     #def start(self):
     #    #print("Starting IPyExperimentsGPU")

@@ -1,40 +1,20 @@
-"Monkey patch to use pynvml api on mac os through pynvx"
+""" Transparently load pynvml for Linux/Windows and pynvx for OSX, resulting in the pynvml API subset available on all supported platforms """
 
-def get_pynvml():
-    import platform
-    from collections import namedtuple
+import platform
 
-    pynvml_i = None
+def load_pynvml_env():
+    "Imports pynvml bits according to the given platform and init it"
+    try:
+        import pynvml
+    except Exception as e:
+        raise Exception(f"{e}\npynvml is required: pip install nvidia-ml-py3")
 
-    # monkey patch from https://github.com/fastai/fastai/commit/e6c7cc2001624f9c6e551426c89de9a12fbf4272
-    if platform.system() == "Darwin":
+    # on OSX we use pynvx with pynvml wrapper (still requires pynvml)
+    if  platform.system() == "Darwin":
         try:
-            import pynvx
-
-            GPUMemory = namedtuple('GPUMemory', ['total', 'free', 'used'])
-            # missing function
-            def cudaDeviceGetHandleByIndex(id): return pynvx.cudaDeviceGetHandles()[id]
-            setattr(pynvx, 'cudaDeviceGetHandleByIndex', cudaDeviceGetHandleByIndex)
-
-            # different named and return value needs be a named tuple
-            def cudaDeviceGetMemoryInfo(handle):
-                info = pynvx.cudaGetMemInfo(handle)
-                return GPUMemory(*info)
-            setattr(pynvx, 'cudaDeviceGetMemoryInfo', cudaDeviceGetMemoryInfo)
-
-            # remap the other functions
-            for m in ['Init', 'DeviceGetCount', 'DeviceGetHandleByIndex', 'DeviceGetMemoryInfo']:
-                setattr(pynvx, f'nvml{m}', getattr(pynvx, f'cuda{m}'))
-
-            pynvml_i = pynvx
-
+            from pynvx import pynvml
         except Exception as e:
-            raise Exception(f"{e}\nYou need to install the pynvx module; pip install pynvx")
-    else:
-        try:
-            import pynvml
-            pynvml_i = pynvml
-        except Exception as e:
-                raise Exception(f"{e}\nYou need to install the nvidia-ml-py3 module; pip install nvidia-ml-py3")
+            raise Exception(f"{e}\npynvx is required; pip install pynvx")
 
-    return pynvml_i
+    pynvml.nvmlInit()
+    return pynvml
