@@ -336,7 +336,7 @@ class IPyExperimentsGPU(IPyExperimentsCPU):
     def backend_init(self):
         super().backend_init()
 
-        from ipyexperiments.utils.inject_pynvx import load_pynvml_env
+        from ipyexperiments.utils.pynvml_gate import load_pynvml_env
 
         self.pynvml = load_pynvml_env()
 

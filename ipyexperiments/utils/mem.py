@@ -1,6 +1,6 @@
 "Helper utility functions for memory management"
 
-from ipyexperiments.utils.inject_pynvx import load_pynvml_env
+from ipyexperiments.utils.pynvml_gate import load_pynvml_env
 import threading, time, gc
 from collections import namedtuple
 
