@@ -3,7 +3,7 @@
 
 ## 0.1.14.dev0 (Work In Progress)
 
-- 
+- Delta Peaked calculation fixed in case of consumed memory being negative (released)
 
 
 ## 0.1.13 (2019-02-22)

@@ -150,9 +150,17 @@ class CellLogger():
         self.cpu_mem_peaked_delta = max(0, cpu_mem_used_peak - cpu_mem_used_delta)
 
         if self.backend != 'cpu':
-            self.gpu_mem_used_new     = self.exp.gpu_ram_used()
-            self.gpu_mem_used_delta   = self.gpu_mem_used_new - self.gpu_mem_used_prev
-            self.gpu_mem_peaked_delta = max(0, self.gpu_mem_used_peak - self.gpu_mem_used_new)
+            self.gpu_mem_used_new = self.exp.gpu_ram_used()
+
+            # delta_used is the difference between current used mem and used mem at the start
+            self.gpu_mem_used_delta = self.gpu_mem_used_new - self.gpu_mem_used_prev
+
+            # peaked_delta is the overhead if any.
+            # 1. The base measurement is the difference between the peak memory
+            # and the used mem at the start.
+            # 2. Then if used_delta is positive it gets subtracted from the base value.
+            self.gpu_mem_peaked_delta = self.gpu_mem_used_peak -  self.gpu_mem_used_prev
+            if self.gpu_mem_used_delta > 0: self.gpu_mem_peaked_delta -= self.gpu_mem_used_delta
 
         if self.compact:
             out = f"CPU: {b2mb(self.cpu_mem_used_delta):0.0f}/{b2mb(self.cpu_mem_peaked_delta):0.0f}/{b2mb(self.cpu_mem_used_new):0.0f} MB"

@@ -74,6 +74,19 @@ GPU:     2567   1437   5465 MB
 
 That means that when the function finished it consumed `2467 MB` of GPU RAM, as compared to the memory usage before its run. However, it actually needed a total of `4000 MB` of GPU RAM to be able to run (`2467`+`1437`). So if you didn't have `4000 MB` of free unfragmented RAM available it would have failed.
 
+## Used and Peaked memory usage defined
+
+* **Delta Consumed** is the difference between current used memory and used memory at the start of the counter.
+
+* **Delta Peaked** is the memory overhead if any. It's calculated in two steps:
+   1. The base measurement is the difference between the peak memory and the used memory at the start of the counter.
+   2. Then if delta used is positive it gets subtracted from the base value.
+
+   It indicates the size of the blip.
+
+   **Warning**: currently the peak memory usage tracking is implemented using a python thread, which is very unreliable, since there is no guarantee the thread will get a chance at running at the moment the peak memory is occuring (or it might not get a chance to run at all). Therefore we need pytorch to implement multiple concurrent and resettable [`torch.cuda.max_memory_allocated`](https://pytorch.org/docs/stable/cuda.html#torch.cuda.max_memory_allocated) counters. Please vote for this [feature request](https://github.com/pytorch/pytorch/issues/16266).
+
+
 ## Framework Preloading
 
 You do need to be aware that some frameworks consume a big chunk of general and GPU RAM when they are used for the first time. For example `pytorch` `cuda` [eats up](
@@ -85,6 +98,9 @@ But `CellLogger` does all this for you, for example, preloading `pytorch` `cuda`
    import pytorch
    torch.ones((1, 1)).cuda() # preload pytorch with cuda libraries
    ```
+
+
+
 
 ## Cache Clearing
 
