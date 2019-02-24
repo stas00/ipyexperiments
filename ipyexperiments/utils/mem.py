@@ -39,15 +39,11 @@ def gpu_mem_allocate_mbs(n, fatal=False):
 
     Return the variable  holding it on success, None on failure.
 
-    Ask for at least 6MB or more.
-
     fatal=True will throw an exception on failure to allocate (default is False).
     """
     # don't try to allocate less than 6MB as it'd be imprecise, need to probably switch to bytes allocation
-    if n < 6: return None # XXX: FIXME
     try:
-        d = int(2**9*n**0.5)
-        return torch.ones((d, d)).cuda().contiguous()
+        return torch.ones((n*2**18)).cuda().contiguous()
     except Exception as e:
         if not fatal: return None
         raise e

@@ -16,11 +16,9 @@ from ipyexperiments.utils.mem import *
 
 Try to allocate `n` MBs.
 
-Return the variable holding the allocated memory on success, `None` on failure. The exact allocated memory may be slightly different in size, within 1MB tolerance.
+Return the variable holding the allocated memory on success, `None` on failure. The exact allocated memory may be slightly different in size, within 2MB tolerance, due to the granularity of the memory pages.
 
 Delete the variable to free up the memory.
-
-Currently returns `None` for `n>=6` (need a more precise way to allocate smaller amounts).
 
 `fatal=True` will throw an exception on failure to allocate (default is `False`).
 
