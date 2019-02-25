@@ -1,6 +1,6 @@
 __all__ = ['IPyExperimentsCPU', 'IPyExperimentsPytorch']
 
-from .cell_logger import CellLogger
+from .cell_logger import CellLogger, b2mb, int2width
 import gc, os, sys, time, psutil, weakref, logging
 from IPython import get_ipython
 from IPython.core.magics.namespace import NamespaceMagics # Used to query namespace.
@@ -15,8 +15,6 @@ IPyExperimentMemory = namedtuple('IPyExperimentMemory', ['consumed', 'reclaimed'
 IPyExperimentData   = namedtuple('IPyExperimentData', ['cpu', 'gpu'])
 
 process = psutil.Process(os.getpid())
-
-def b2mb(x): return int(x/2**20)
 
 class IPyExperiments():
     "Create an experiment with time/memory checkpoints"
@@ -163,17 +161,24 @@ class IPyExperiments():
 
     def print_state(self):
         """ Print memory stats """
-        print("\n*** Current state:")
-        print(f"RAM:  Used  Free  Total      Util")
 
-        cpu_ram_total, cpu_ram_free, cpu_ram_used = self.cpu_ram()
-        cpu_ram_util = cpu_ram_used/cpu_ram_total*100 if cpu_ram_total else 100
-        print(f"CPU: {b2mb(cpu_ram_used):5.0f} {b2mb(cpu_ram_free):5.0f}  {b2mb(cpu_ram_total):5.0f} MB {cpu_ram_util:6.2f}% ")
-
+        if 1: # align
+            cpu_ram_total, cpu_ram_free, cpu_ram_used = self.cpu_ram()
+            cpu_ram_util = cpu_ram_used/cpu_ram_total*100 if cpu_ram_total else 100
+            vals  = [cpu_ram_total, cpu_ram_free, cpu_ram_used]
         if self.backend != 'cpu':
             gpu_ram_total, gpu_ram_free, gpu_ram_used = self.gpu_ram()
             gpu_ram_util = gpu_ram_used/gpu_ram_total*100 if gpu_ram_total else 100
-            print(f"GPU: {b2mb(gpu_ram_used):5.0f} {b2mb(gpu_ram_free):5.0f}  {b2mb(gpu_ram_total):5.0f} MB {gpu_ram_util:6.2f}% ")
+            vals += [gpu_ram_total, gpu_ram_free, gpu_ram_used]
+
+        w = int2width(*map(b2mb, vals)) + 1 # some air
+
+        print("\n*** Current state:")
+        print(f"RAM: {'Used':>{w}} {'Free':>{w}} {'Total':>{w}}    {'Util':>{w}}")
+        if 1:
+            print(f"CPU: {b2mb(cpu_ram_used):{w},.0f} {b2mb(cpu_ram_free):{w},.0f} {b2mb(cpu_ram_total):{w},.0f} MB {cpu_ram_util:6.2f}% ")
+        if self.backend != 'cpu':
+            print(f"GPU: {b2mb(gpu_ram_used):{w},.0f} {b2mb(gpu_ram_free):{w},.0f} {b2mb(gpu_ram_total):{w},.0f} MB {gpu_ram_util:6.2f}% ")
 
 
     def finish(self):
@@ -257,12 +262,20 @@ class IPyExperiments():
         cpu_ram_pct = cpu_ram_recl/cpu_ram_cons if cpu_ram_cons else 1
         gpu_ram_pct = gpu_ram_recl/gpu_ram_cons if gpu_ram_cons else 1
 
-        print("\n*** Experiment memory:")
-        print(f"RAM:  Consumed     Reclaimed")
 
-        print(    f"CPU: {b2mb(cpu_ram_cons):7.0f}   {b2mb(cpu_ram_recl):5.0f} MB ({cpu_ram_pct*100:6.2f}%)")
+        if 1: # align
+            vals  = [cpu_ram_cons, cpu_ram_recl]
         if self.backend != 'cpu':
-            print(f"GPU: {b2mb(gpu_ram_cons):7.0f}   {b2mb(gpu_ram_recl):5.0f} MB ({gpu_ram_pct*100:6.2f}%)")
+            vals += [gpu_ram_cons, gpu_ram_recl]
+        w = int2width(*map(b2mb, vals)) + 1 # some air
+        if w < 8: w = 8 # accommodate header width
+
+        print("\n*** Experiment memory:")
+        print(f"RAM: {'Consumed':>{w}}       {'Reclaimed':>{w}}")
+        if 1:
+            print(f"CPU: {b2mb(cpu_ram_cons):{w},.0f} {b2mb(cpu_ram_recl):{w},.0f} MB ({cpu_ram_pct*100:6.2f}%)")
+        if self.backend != 'cpu':
+            print(f"GPU: {b2mb(gpu_ram_cons):{w},.0f} {b2mb(gpu_ram_recl):{w},.0f} MB ({gpu_ram_pct*100:6.2f}%)")
 
         self.print_state()
 

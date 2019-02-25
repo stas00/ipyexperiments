@@ -9,6 +9,13 @@ logger.setLevel(logging.ERROR)
 #logger.setLevel(logging.DEBUG)
 
 def b2mb(x): return int(x/2**20)
+
+def int2width(*n):
+    "Find the max length among the int args and add a few for comma-1,000 {:,} repr"
+    w = max(map(len, map(str, n)))
+    c = int((w-1)/3) # accommodate commas width
+    return w + c
+
 def secs2time(secs):
     " secs to time, secs rounded to 3 decimals "
     msec = int(abs(secs-int(secs))*1000)
@@ -163,17 +170,25 @@ class CellLogger():
             if self.gpu_mem_used_delta > 0: self.gpu_mem_peaked_delta -= self.gpu_mem_used_delta
 
         if self.compact:
-            out = f"CPU: {b2mb(self.cpu_mem_used_delta):0.0f}/{b2mb(self.cpu_mem_peaked_delta):0.0f}/{b2mb(self.cpu_mem_used_new):0.0f} MB"
+            if 1:
+                out  = f"CPU: {b2mb(self.cpu_mem_used_delta):0.0f}/{b2mb(self.cpu_mem_peaked_delta):0.0f}/{b2mb(self.cpu_mem_used_new):0.0f} MB"
             if self.backend != 'cpu':
                 out += f" | GPU: {b2mb(self.gpu_mem_used_delta):0.0f}/{b2mb(self.gpu_mem_peaked_delta):0.0f}/{b2mb(self.gpu_mem_used_new):0.0f} MB"
             out += f" | Time {secs2time(self.time_delta)} | (Consumed/Peaked/Used Total)"
             print(out)
         else:
-            pre = '･ '
-            print(f"{pre}RAM: △Consumed △Peaked  Used Total | Exec time {secs2time(self.time_delta)}")
-            print(f"{pre}CPU:     {b2mb(self.cpu_mem_used_delta):5.0f}   {b2mb(self.cpu_mem_peaked_delta):5.0f}    {b2mb(self.cpu_mem_used_new):5.0f} MB |")
+            if 1:
+                vals  = [self.cpu_mem_used_delta, self.cpu_mem_peaked_delta, self.cpu_mem_used_new]
             if self.backend != 'cpu':
-                print(f"{pre}GPU:     {b2mb(self.gpu_mem_used_delta):5.0f}   {b2mb(self.gpu_mem_peaked_delta):5.0f}    {b2mb(self.gpu_mem_used_new):5.0f} MB |")
+                vals += [self.gpu_mem_used_delta, self.gpu_mem_peaked_delta, self.gpu_mem_used_new]
+            w = int2width(*map(b2mb, vals)) + 1 # some air
+            if w < 10: w = 10 # accommodate header width
+            pre = '･ '
+            print(f"{pre}RAM: {'△Consumed':>{w}} {'△Peaked':>{w}}    {'Used Total':>{w}} | Exec time {secs2time(self.time_delta)}")
+            if 1:
+                print(f"{pre}CPU: {b2mb(self.cpu_mem_used_delta):{w},.0f} {b2mb(self.cpu_mem_peaked_delta):{w},.0f} {b2mb(self.cpu_mem_used_new):{w},.0f} MB |")
+            if self.backend != 'cpu':
+                print(f"{pre}GPU: {b2mb(self.gpu_mem_used_delta):{w},.0f} {b2mb(self.gpu_mem_peaked_delta):{w},.0f} {b2mb(self.gpu_mem_used_new):{w},.0f} MB |")
 
         # for self.data accessor
         self.cpu_mem_used_prev = self.cpu_mem_used_new

@@ -3,8 +3,8 @@
 
 ## 0.1.15.dev0 (Work In Progress)
 
-- 
-
+- dynamically format column widths in reports
+- add , in large numbers (1,000)
 
 ## 0.1.14 (2019-02-24)
 

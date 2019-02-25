@@ -62,6 +62,9 @@ def print_output(output):
 
 ############## EXP helpers #################
 
+# number strings can be 1,000.05, so strip commas and convert to float
+def str2flt(s): return float(s.replace(',',''))
+
 # --------------------------------------------------------------------- #
 # the following functions work with the captured output
 # output is captured by `%%capture output` from a cell before
@@ -70,10 +73,10 @@ def print_output(output):
 # RAM:  Consumed     Reclaimed
 # CPU: 255.8 MB 255.8 MB ( 99.99%)
 def get_consumed_reclaimed_size(output):
-    pat = re.compile('Consumed\s+Reclaimed\nCPU:\s+([\d\.]+)\s+([\d\.]+) MB\s+\((\s*[\d\.]+)%\)', flags=re.MULTILINE)
+    pat = re.compile('Consumed\s+Reclaimed\nCPU:\s+([\d,\.]+)\s+([\d,\.]+) MB\s+\((\s*[\d\.]+)%\)', flags=re.MULTILINE)
     match = pat.findall(output)
     if match:
-        (consumed_size, reclaimed_size, reclaimed_pct) = map(float, match[0])
+        (consumed_size, reclaimed_size, reclaimed_pct) = map(str2flt, match[0])
         return consumed_size, reclaimed_size, reclaimed_pct
     else:
         raise ValueError(f"failed to match pattern {pat}")
@@ -121,8 +124,8 @@ def check_report_strings(output):
 # CPU:      123    321     2159 MB
 # GPU:      356    789     2160 MB
 def get_sizes(output, type):
-    match = re.findall(type + r': +([\d\.]+) +([\d\.]+) +([\d\.]+) MB', output)
-    (consumed, peaked, total) = map(float, match[0])
+    match = re.findall(type + r': +([\d,\.]+) +([\d,\.]+) +([\d,\.]+) MB', output)
+    (consumed, peaked, total) = map(str2flt, match[0])
     return consumed, peaked, total
 
 def get_sizes_cpu(output): return get_sizes(output, "CPU")
