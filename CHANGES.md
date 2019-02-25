@@ -6,10 +6,12 @@
 - dynamically format column widths in reports
 - add , in large numbers (1,000)
 
+
 ## 0.1.14 (2019-02-24)
 
 - Delta Peaked calculation fixed in case of consumed memory being negative (released)
 - switch to pynvx's pynvml wrapper
+
 
 ## 0.1.13 (2019-02-22)
 
