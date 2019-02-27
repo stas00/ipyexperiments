@@ -162,12 +162,18 @@ class CellLogger():
             # delta_used is the difference between current used mem and used mem at the start
             self.gpu_mem_used_delta = self.gpu_mem_used_new - self.gpu_mem_used_prev
 
-            # peaked_delta is the overhead if any.
-            # 1. The base measurement is the difference between the peak memory
-            # and the used mem at the start.
-            # 2. Then if used_delta is positive it gets subtracted from the base value.
-            self.gpu_mem_peaked_delta = self.gpu_mem_used_peak -  self.gpu_mem_used_prev
-            if self.gpu_mem_used_delta > 0: self.gpu_mem_peaked_delta -= self.gpu_mem_used_delta
+            # peaked_delta is the overhead if any. It is calculated as follows:
+
+            # 1. The difference between the peak memory and the used memory at the
+            # start is measured:
+            # 2a. If it's negative, then peaked_delta is 0
+            # 2b. Otherwise, if used_delta is positive it gets subtracted from peaked_delta
+            # XXX: 2a shouldn't be needed once we have a reliable peak counter
+            self.gpu_mem_peaked_delta = self.gpu_mem_used_peak - self.gpu_mem_used_prev
+            if self.gpu_mem_peaked_delta < 0:
+                self.gpu_mem_peaked_delta = 0
+            elif self.gpu_mem_used_delta > 0:
+                self.gpu_mem_peaked_delta -= self.gpu_mem_used_delta
 
         if self.compact:
             if 1:

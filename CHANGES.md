@@ -3,7 +3,7 @@
 
 ## 0.1.16.dev0 (Work In Progress)
 
-- 
+- workaround for unreliable peak thread (avoid negative numbers)
 
 
 ## 0.1.15 (2019-02-24)
