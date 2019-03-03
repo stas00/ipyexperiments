@@ -8,6 +8,7 @@ See [this demo notebook](https://github.com/stas00/ipyexperiments/blob/master/de
 
 1. Initiate the subsystem:
    ```python
+   from ipyexperiments import IPyExperimentsPytorch
    exp = IPyExperimentsPytorch(cl_enable=True, cl_compact=False, cl_gc_collect=True)
    # exp.cl is the subsystem object
    ```

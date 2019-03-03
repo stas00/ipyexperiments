@@ -163,7 +163,7 @@ class CellLogger():
             self.gpu_mem_used_delta = self.gpu_mem_used_new - self.gpu_mem_used_prev
 
             # peaked_delta is the overhead if any. It is calculated as follows:
-
+            #
             # 1. The difference between the peak memory and the used memory at the
             # start is measured:
             # 2a. If it's negative, then peaked_delta is 0
