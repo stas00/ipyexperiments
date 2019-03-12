@@ -4,7 +4,7 @@
 ## 0.1.16 (2019-03-12)
 
 - workaround for unreliable peak thread (avoid negative numbers)
-
+- add locking to avoid thread race-condition
 
 ## 0.1.15 (2019-02-24)
 
