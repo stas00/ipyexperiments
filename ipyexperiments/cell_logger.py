@@ -37,6 +37,7 @@ class CellLogger():
         # proxy seems to be simpler to use than weakref.ref, which needs to be
         # called self.exp().foo
         self.exp = weakref.proxy(exp)
+        self.lock = threading.Lock()
 
         self.compact    = compact    # one line printouts
         self.gc_collect = gc_collect # don't use when tracking mem leaks
@@ -105,16 +106,18 @@ class CellLogger():
         try: self.ipython.events.unregister("post_run_cell", self.post_run_cell)
         except ValueError: pass
 
+        #if self.peak_monitor_thread and self.peak_monitor_thread.is_alive():
+        #    self.peak_monitor_thread._Thread__stop()
+
+        self.peak_monitoring = False
+
         # run post_run_cell() manually, since it's no longer registered
         self.post_run_cell()
 
-        self.running         = False
-        self.peak_monitoring = False
+        self.running = False
 
 
     def pre_run_cell(self):
-        if not self.running: return
-
         logger.debug(f"pre_run_cell: 1 f{self.exp}")
 
         # start RAM tracing
@@ -135,10 +138,8 @@ class CellLogger():
 
     def post_run_cell(self):
         if not self.running: return
-
-        # don't run this if self.exp doesn't exist anymore (weakref)
-        if self.exp is None: return
         logger.debug(f"post_run_cell: 1 f{self.exp}")
+
         self.time_delta = time.time() - self.time_start
 
         if self.backend != 'cpu':
@@ -152,12 +153,16 @@ class CellLogger():
         cpu_mem_used_delta, cpu_mem_used_peak = tracemalloc.get_traced_memory()
         tracemalloc.stop() # reset accounting
 
-        self.cpu_mem_used_new     = self.exp.cpu_ram_used()
+        with self.lock:
+            if self.exp is None: return
+            self.cpu_mem_used_new = self.exp.cpu_ram_used()
         self.cpu_mem_used_delta   = cpu_mem_used_delta
         self.cpu_mem_peaked_delta = max(0, cpu_mem_used_peak - cpu_mem_used_delta)
 
         if self.backend != 'cpu':
-            self.gpu_mem_used_new = self.exp.gpu_ram_used()
+            with self.lock:
+                if self.exp is None: return
+                self.gpu_mem_used_new = self.exp.gpu_ram_used()
 
             # delta_used is the difference between current used mem and used mem at the start
             self.gpu_mem_used_delta = self.gpu_mem_used_new - self.gpu_mem_used_prev
@@ -212,19 +217,21 @@ class CellLogger():
         self.cpu_mem_used_peak = -1
         self.gpu_mem_used_peak = -1
 
-        gpu_id     = self.exp.torch.cuda.current_device()
-        gpu_handle = self.exp.pynvml.nvmlDeviceGetHandleByIndex(gpu_id)
+        with self.lock:
+            if self.exp is None: return
+            gpu_id     = self.exp.torch.cuda.current_device()
+            gpu_handle = self.exp.pynvml.nvmlDeviceGetHandleByIndex(gpu_id)
 
         while True:
-            if self.exp is None: break
-
             # using tracemalloc for tracing peak cpu RAM instead
             #cpu_mem_used = self.exp.cpu_ram_used()
             #self.cpu_mem_used_peak = max(cpu_mem_used, self.cpu_mem_used_peak)
 
             # no gc.collect, empty_cache here, since it has to be fast and we
             # want to measure only the peak memory usage
-            gpu_mem_used = self.exp.gpu_ram_used_fast(gpu_handle)
+            with self.lock:
+                if self.exp is None: break
+                gpu_mem_used = self.exp.gpu_ram_used_fast(gpu_handle)
             self.gpu_mem_used_peak = max(gpu_mem_used, self.gpu_mem_used_peak)
 
             time.sleep(0.001) # 1msec

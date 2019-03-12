@@ -1,7 +1,7 @@
 __all__ = ['IPyExperimentsCPU', 'IPyExperimentsPytorch']
 
 from .cell_logger import CellLogger, b2mb, int2width
-import gc, os, sys, time, psutil, weakref, logging
+import gc, os, sys, time, psutil, weakref, logging, threading
 from IPython import get_ipython
 from IPython.core.magics.namespace import NamespaceMagics # Used to query namespace.
 from collections import namedtuple
@@ -185,8 +185,11 @@ class IPyExperiments():
         if self.cl:
             logger.debug(self.__class__.__name__ +f"finish: 0 {self}")
             self.cl.stop()
-            self.cl.exp = None # untangle the circular reference
-            self.cl     = None # free the CL object
+            # must acquire thread lock to avoid thread race condition where the
+            # exp object could disappear half-way through thread's processing
+            with self.cl.lock:
+                self.cl.exp = None # untangle the circular reference
+                self.cl     = None # free the CL object
 
         self.running = False
 
