@@ -1,7 +1,7 @@
 "Helper utility functions for memory management"
 
 from ipyexperiments.utils.pynvml_gate import load_pynvml_env
-import threading, time, gc
+import gc
 from collections import namedtuple
 
 try:
