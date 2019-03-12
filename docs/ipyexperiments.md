@@ -184,6 +184,8 @@ But `IPyExperimentsPytorch` does all this for you, for example, preloading `pyto
 
 ## Caveats
 
+### Local variables
+
 The module only deletes newly defined local variables. i.e. those that didn't exist before the experiment started and were created after it has started.
 
 Due to the nature of access to `ipython`'s local variable list (there is just the list of names), there is no way of telling whether a certain variable has been redefined inside the scope of the experiment. The current algorithm compares the list of local variables before the experiment, and after it - and that's how it knows which ones should be deleted and their memory reclaimed.

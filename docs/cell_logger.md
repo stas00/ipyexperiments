@@ -118,6 +118,12 @@ In order to give you correct memory usage numbers, this module by default runs `
 So, make sure you compare your total GPU RAM consumption with and without `gc_collect=True` in the object `CellLogger` constructor.
 
 
+## Caveats
+
+### Peak memory monitor thread is not reliable
+
+Warning: currently the peak memory usage tracking is implemented using a python thread, which is very unreliable, since there is no guarantee the thread will get a chance at running at the moment the peak memory is occuring (or it might not get a chance to run at all). Therefore we need pytorch to implement multiple concurrent and resettable `torch.cuda.max_memory_allocated` counters. Please vote for this [feature request](https://github.com/pytorch/pytorch/issues/16266).
+
 ## IPyExperiments's main documentation
 
 [IPyExperiments](https://github.com/stas00/ipyexperiments/blob/master/docs/ipyexperiments.md)
