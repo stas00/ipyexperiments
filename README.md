@@ -84,6 +84,15 @@ See [this demo notebook](https://github.com/stas00/ipyexperiments/blob/master/de
 4. [mem debug/profiling utils](https://github.com/stas00/ipyexperiments/blob/master/docs/utils_mem.md)
 
 
+## Issues
+
+**Up to date `nvidia-ml-py3`**. For pytorch-mode on NVIDIA GPU this project relies on `nvidia-ml-py3`, which hasn't been released on pip since 2017. If this library doesn't work for you, you may need to install its newer version directly from github, using:
+
+   ```
+   pip install git+https://github.com/nicolargo/nvidia-ml-py3
+   ```
+
+
 ## Contributing and Testing
 
 Please see [CONTRIBUTING.md](https://github.com/stas00/ipyexperiments/blob/master/CONTRIBUTING.md).
