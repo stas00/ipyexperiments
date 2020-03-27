@@ -32,7 +32,7 @@ def enforce_reproducibility(use_seed=0, quiet=True):
     """
     seed = use_seed if use_seed else random.randint(1, 1000000)
     if not quiet: print(f"Using seed: {seed}")
-    print(f"Using seed: {seed}")
+
     # python RNG
     random.seed(seed)
 
