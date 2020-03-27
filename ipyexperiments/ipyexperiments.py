@@ -20,23 +20,23 @@ class IPyExperiments():
     "Create an experiment with time/memory checkpoints"
 
     def __init__(self, exp_enable=True,
-                 cl_enable=True, cl_compact=False, cl_gc_collect=True):
+                 cl_enable=True, cl_compact=False, cl_gc_collect=True, cl_set_seed=0):
         """ Instantiate an object with parameters:
 
         Parameters:
-        * exp_enable=False      - run just the CellLogger if exp_enable=True, cl_enable=True
+        * exp_enable=False   - run just the CellLogger if exp_enable=False, cl_enable=True
 
         Cell logger Parameters: these are being passed to CellLogger (and the defaults)
         * cl_enable=True     - run the cell logger
         * cl_compact=False   - cell report compact
         * cl_gc_collect=True - gc_collect at the end of each cell before mem measurement
-
+        * cl_set_seed=0      - set RNG seed before each cell is run to the provided value
         """
 
         logger.debug(f"{self.__class__.__name__}::__init__: {self}")
 
         if cl_enable:
-            self.cl = CellLogger(exp=self, compact=cl_compact, gc_collect=cl_gc_collect)
+            self.cl = CellLogger(exp=self, compact=cl_compact, gc_collect=cl_gc_collect, set_seed=cl_set_seed)
         else:
             self.cl = None
 

@@ -3,7 +3,7 @@
 
 ## 0.1.17.dev0 (Work In Progress)
 
-- 
+- add cl_set_seed=SEED to automatically reset the seed to a fixed value in each cell
 
 
 ## 0.1.16 (2019-03-12)

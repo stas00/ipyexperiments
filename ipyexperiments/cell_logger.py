@@ -1,4 +1,4 @@
-import time, psutil, gc, tracemalloc, threading, weakref, datetime
+import time, psutil, gc, tracemalloc, threading, weakref, datetime, sys, random
 import logging
 from collections import namedtuple
 from IPython import get_ipython
@@ -25,10 +25,37 @@ CellLoggerMemory = namedtuple('CellLoggerMemory', ['used_delta', 'peaked_delta',
 CellLoggerTime   = namedtuple('CellLoggerTime', ['time_delta'])
 CellLoggerData   = namedtuple('CellLoggerData', ['cpu', 'gpu', 'time'])
 
+def enforce_reproducibility(use_seed=0, quiet=True):
+    """
+    Set random seed which is picked at random unless explicitly passed
+    Returns: used seed
+    """
+    seed = use_seed if use_seed else random.randint(1, 1000000)
+    if not quiet: print(f"Using seed: {seed}")
+    print(f"Using seed: {seed}")
+    # python RNG
+    random.seed(seed)
+
+    # numpy RNG
+    if 'numpy' in sys.modules:
+        import numpy as np # ensure symbol defined
+        np.random.seed(seed)
+
+    # pytorch RNGs
+    if 'torch' in sys.modules:
+        import torch # ensure symbol defined
+        torch.manual_seed(seed)          # cpu + cuda
+        torch.cuda.manual_seed_all(seed) # multi-gpu
+        if use_seed: # slower speed! https://pytorch.org/docs/stable/notes/randomness.html#cudnn
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark     = False
+
+    return seed
+
 # all the memory measurements functions come from IPyExperiments subclasses
 class CellLogger():
 
-    def __init__(self, exp=None, compact=False, gc_collect=True):
+    def __init__(self, exp=None, compact=False, gc_collect=True, set_seed=0):
 
         # any subclass object of IPyExperiments that gives us access to its
         # specific memory measurement functions
@@ -41,6 +68,7 @@ class CellLogger():
 
         self.compact    = compact    # one line printouts
         self.gc_collect = gc_collect # don't use when tracking mem leaks
+        self.set_seed   = set_seed   # set RNG seed before each cell is run to the provided value
 
         self.peak_monitoring = False
         self.running         = False
@@ -102,7 +130,9 @@ class CellLogger():
         logger.debug("CellLogger: Stopping")
 
         try: self.ipython.events.unregister("pre_run_cell",  self.pre_run_cell)
-        except ValueError: pass
+        except ValueError:
+            #print("Failed to unregister: pre_run_cell ")
+            pass
         try: self.ipython.events.unregister("post_run_cell", self.post_run_cell)
         except ValueError: pass
 
@@ -119,6 +149,9 @@ class CellLogger():
 
     def pre_run_cell(self):
         logger.debug(f"pre_run_cell: 1 f{self.exp}")
+
+        # seed reset
+        if self.set_seed != 0: seed = enforce_reproducibility(self.set_seed)
 
         # start RAM tracing
         tracemalloc.start()
