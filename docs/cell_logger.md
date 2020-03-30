@@ -9,13 +9,14 @@ See [this demo notebook](https://github.com/stas00/ipyexperiments/blob/master/de
 1. Initiate the subsystem:
    ```python
    from ipyexperiments import IPyExperimentsPytorch
-   exp = IPyExperimentsPytorch(cl_enable=True, cl_compact=False, cl_gc_collect=True)
+   exp = IPyExperimentsPytorch(cl_enable=True, cl_compact=False, cl_gc_collect=True, cl_set_seed=0)
    # exp.cl is the subsystem object
    ```
    Parameters:
    * `cl_enable` - enable the subsystem
    * `cl_compact` - use compact one line printouts
    * `cl_gc_collect` - get correct memory usage reports. Don't use when tracking memory leaks (objects with circular reference).
+   * `cl_set_seed` - set RNG seed before each cell is run to the provided seed value
 
    If you just want to get the per cell/line logging, pass `exp_enable=False` to disable the parent `IPyExperiments` system,
 
@@ -86,6 +87,25 @@ That means that when the function finished it consumed `2467 MB` of GPU RAM, as 
    It indicates the size of the blip.
 
    **Warning**: currently the peak memory usage tracking is implemented using a python thread, which is very unreliable, since there is no guarantee the thread will get a chance at running at the moment the peak memory is occuring (or it might not get a chance to run at all). Therefore we need pytorch to implement multiple concurrent and resettable [`torch.cuda.max_memory_allocated`](https://pytorch.org/docs/stable/cuda.html#torch.cuda.max_memory_allocated) counters. Please vote for this [feature request](https://github.com/pytorch/pytorch/issues/16266).
+
+
+## Resetting RNG seed
+
+If you need reproducible results, with a scope of one or more cells (e.g. re-running the same cell and expecting identical outcomes) you can enable the RNG seed setting by passing `cl_set_seed=SEED`, e.g. `cl_set_seed=42`. Here is an example:
+
+```
+# cell 1
+import numpy as np
+from ipyexperiments import IPyExperimentsPytorch
+
+# cell 2
+exp13 = IPyExperimentsPytorch(exp_enable=False, cl_set_seed=42, cl_compact=True)
+rnd1 = np.random.random()
+
+# cell 3 (the seed gets reset automatically before the cell is run)
+rnd2 = np.random.random()
+assert rnd1 == rnd2, f"values should be the same rnd1={rnd1} rnd2={rnd2}"
+```
 
 
 ## Framework Preloading

@@ -28,7 +28,7 @@ class IPyExperiments():
 
         Cell logger Parameters: these are being passed to CellLogger (and the defaults)
         * cl_enable=True     - run the cell logger
-        * cl_compact=False   - cell report compact
+        * cl_compact=False   - compact cell report
         * cl_gc_collect=True - gc_collect at the end of each cell before mem measurement
         * cl_set_seed=0      - set RNG seed before each cell is run to the provided value
         """

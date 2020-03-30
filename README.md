@@ -29,7 +29,7 @@ As an extra bonus you get access to the memory consumption data, so you can use 
 
 The idea behind this module is very simple - it implements a python function-like functionality, where its local variables get destroyed at the end of its run, giving us memory back, except it'll work across multiple jupyter notebook cells (or ipython). In addition it also runs `gc.collect()` to immediately release badly behaved variables with circular references, and reclaim general and GPU RAM. It also helps to discover memory leaks, and performs various other useful things behind the scenes.
 
-If you need a more fine-grained memory profiling, the `CellLogger` sub-system reports RAM usage on a per cell-level when used with jupyter or per line of code in ipython.  You get the resource usage report automatically as soon as a command or a cell finished executing.
+If you need a more fine-grained memory profiling, the `CellLogger` sub-system reports RAM usage on a per cell-level when used with jupyter or per line of code in ipython.  You get the resource usage report automatically as soon as a command or a cell finished executing. It includes other features, such as resetting RNG seed in python/numpy/pytorch if you need a reproducible result when re-running the whole notebook or just one cell.
 
 Currently this sub-system logs GPU RAM, general RAM and execution time. But it can be expanded to track other important things. While there are various similar loggers out there, the main focus of this implementation is to help track GPU, whose main scarce resource is GPU RAM.
 
@@ -56,19 +56,25 @@ Currently this sub-system logs GPU RAM, general RAM and execution time. But it c
 
 ## Usage
 
-Here is an example with using code from the [`fastai`](https://github.com/fastai/fastai) library.
-
-Please, note, that I added a visual leading space to demonstrate the idea, but, of course, it won't be a valid python code.
+Here is an example with using code from the [`fastai v1`](https://github.com/fastai/fastai) library, spread out through 8 jupyter notebook cells:
 
 ```
-cell 1: exp1 = IPyExperimentsPytorch()
-cell 2:   learn1 = language_model_learner(data_lm, bptt=60, drop_mult=0.25, pretrained_model=URLs.WT103)
-cell 3:   learn1.lr_find()
-cell 4: del exp1
-cell 5: exp2 = IPyExperimentsPytorch()
-cell 6:   learn2 = language_model_learner(data_lm, bptt=70, drop_mult=0.3, pretrained_model=URLs.WT103)
-cell 7:   learn2.lr_find()
-cell 8: del exp2
+# cell 1
+exp1 = IPyExperimentsPytorch() # new experiment
+# cell 2
+learn1 = language_model_learner(data_lm, bptt=60, drop_mult=0.25, pretrained_model=URLs.WT103)
+# cell 3
+learn1.lr_find()
+# cell 4
+del exp1
+# cell 5
+exp2 = IPyExperimentsPytorch() # new experiment
+# cell 6
+learn2 = language_model_learner(data_lm, bptt=70, drop_mult=0.3, pretrained_model=URLs.WT103)
+# cell 7
+learn2.lr_find()
+# cell 8
+del exp2
 ```
 
 ## Demo
