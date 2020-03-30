@@ -25,13 +25,12 @@ CellLoggerMemory = namedtuple('CellLoggerMemory', ['used_delta', 'peaked_delta',
 CellLoggerTime   = namedtuple('CellLoggerTime', ['time_delta'])
 CellLoggerData   = namedtuple('CellLoggerData', ['cpu', 'gpu', 'time'])
 
-def enforce_reproducibility(use_seed=0, quiet=True):
+def set_seed(seed=0):
     """
-    Set random seed which is picked at random unless explicitly passed
-    Returns: used seed
+    if seed is not 0 set the passed seed val in python, numpy, pytorch, etc. RNGs (if they are loaded)
     """
-    seed = use_seed if use_seed else random.randint(1, 1000000)
-    if not quiet: print(f"Using seed: {seed}")
+    if seed == 0: return
+    logger.debug("Setting seed: {seed}")
 
     # python RNG
     random.seed(seed)
@@ -46,11 +45,10 @@ def enforce_reproducibility(use_seed=0, quiet=True):
         import torch # ensure symbol defined
         torch.manual_seed(seed)          # cpu + cuda
         torch.cuda.manual_seed_all(seed) # multi-gpu
-        if use_seed: # slower speed! https://pytorch.org/docs/stable/notes/randomness.html#cudnn
-            torch.backends.cudnn.deterministic = True
-            torch.backends.cudnn.benchmark     = False
+        # slower speed! https://pytorch.org/docs/stable/notes/randomness.html#cudnn
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark     = False
 
-    return seed
 
 # all the memory measurements functions come from IPyExperiments subclasses
 class CellLogger():
@@ -114,12 +112,13 @@ class CellLogger():
         self.cpu_mem_used_prev = self.exp.cpu_ram_used()
         if self.backend != 'cpu':
             self.gpu_mem_used_prev = self.exp.gpu_ram_used()
-
         self.ipython.events.register("pre_run_cell",  self.pre_run_cell)
+        logger.debug(f"registered pre_run_cell: {self.pre_run_cell}")
         self.ipython.events.register("post_run_cell", self.post_run_cell)
+        logger.debug(f"registered post_run_cell: {self.post_run_cell}")
 
         # run pre_run_cell() manually, since we are past that event in this cell
-        self.pre_run_cell()
+        self.pre_run_cell(None)
 
         return self
 
@@ -129,29 +128,33 @@ class CellLogger():
         if not self.running: return
         logger.debug("CellLogger: Stopping")
 
-        try: self.ipython.events.unregister("pre_run_cell",  self.pre_run_cell)
-        except ValueError:
-            #print("Failed to unregister: pre_run_cell ")
-            pass
-        try: self.ipython.events.unregister("post_run_cell", self.post_run_cell)
-        except ValueError: pass
+        self.ipython.events.unregister("pre_run_cell",  self.pre_run_cell)
+        self.ipython.events.unregister("post_run_cell", self.post_run_cell)
 
+        # try: self.ipython.events.unregister("pre_run_cell",  self.pre_run_cell)
+        # except ValueError:
+        #     print("Failed to unregister: pre_run_cell ")
+        #     pass
+        # try: self.ipython.events.unregister("post_run_cell", self.post_run_cell)
+        # except ValueError:
+        #     print("Failed to unregister: pre_run_cell ")
+        #     pass
         #if self.peak_monitor_thread and self.peak_monitor_thread.is_alive():
         #    self.peak_monitor_thread._Thread__stop()
 
         self.peak_monitoring = False
 
         # run post_run_cell() manually, since it's no longer registered
-        self.post_run_cell()
+        self.post_run_cell(None)
 
         self.running = False
 
 
-    def pre_run_cell(self):
-        logger.debug(f"pre_run_cell: 1 f{self.exp}")
+    def pre_run_cell(self, info):
+        logger.debug(f"pre_run_cell: 1 {self.exp}")
 
         # seed reset
-        if self.set_seed != 0: seed = enforce_reproducibility(self.set_seed)
+        if self.set_seed != 0: set_seed(self.set_seed)
 
         # start RAM tracing
         tracemalloc.start()
@@ -169,9 +172,9 @@ class CellLogger():
         self.time_start = time.time()
 
 
-    def post_run_cell(self):
+    def post_run_cell(self, result):
+        logger.debug(f"post_run_cell: 1 {self.exp}")
         if not self.running: return
-        logger.debug(f"post_run_cell: 1 f{self.exp}")
 
         self.time_delta = time.time() - self.time_start
 
@@ -208,7 +211,7 @@ class CellLogger():
             # 2b. Otherwise, if used_delta is positive it gets subtracted from peaked_delta
             # XXX: 2a shouldn't be needed once we have a reliable peak counter
             self.gpu_mem_peaked_delta = self.gpu_mem_used_peak - self.gpu_mem_used_prev
-            if self.gpu_mem_peaked_delta < 0:
+            if self.gpu_mem_peaked_delta <= 0:
                 self.gpu_mem_peaked_delta = 0
             elif self.gpu_mem_used_delta > 0:
                 self.gpu_mem_peaked_delta -= self.gpu_mem_used_delta

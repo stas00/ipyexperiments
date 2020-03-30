@@ -3,6 +3,7 @@
 
 ## 0.1.17.dev0 (Work In Progress)
 
+- fix bug in ipython callback functions definition
 - add cl_set_seed=SEED to automatically reset the seed to a fixed value in each cell
 
 
