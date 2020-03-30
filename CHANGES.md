@@ -1,7 +1,7 @@
 # Changes
 
 
-## 0.1.17.dev0 (Work In Progress)
+## 0.1.17 (2020-03-30)
 
 - fix bug in ipython callback functions definition
 - add cl_set_seed=SEED to automatically reset the seed to a fixed value in each cell
