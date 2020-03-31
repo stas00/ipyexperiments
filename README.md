@@ -11,7 +11,7 @@ jupyter/ipython experiment containers and utils for profiling and reclaiming GPU
 
 ## About
 
-This module's main purpose is to help calibrate hyper parameters in deep learning notebooks to fit the available GPU and General RAM, but, of course, it can be useful for any other use where memory limits is a constant issue. It is also useful for detecting memory leaks in your code.
+This module's main purpose is to help calibrate hyper parameters in deep learning notebooks to fit the available GPU and General RAM, but, of course, it can be useful for any other use where memory limits is a constant issue. It is also useful for detecting memory leaks in your code. And over time other goodies that help with running machine learning experiments have been added.
 
 This package is slowly evolving into a suite of different helper modules that are designed to help diagnose issues with memory leakages and make the debug of these easy.
 
