@@ -12,6 +12,7 @@ requirements = to_list("""
   nvidia-ml-py3
   psutil
   pynvx>=1.0.0;platform_system=="Darwin"
+  ipython>=6.0.0 # events support
 """)
 
 setup_requirements = ['pytest-runner']
