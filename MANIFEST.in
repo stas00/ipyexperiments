@@ -1,7 +1,7 @@
 include AUTHORS.md
 include CONTRIBUTING.md
 include CHANGES.md
-include LICENSE
+include LICENSE.txt
 include README.md
 
 # include recursively
