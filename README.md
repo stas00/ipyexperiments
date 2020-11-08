@@ -106,3 +106,10 @@ Please see [CONTRIBUTING.md](https://github.com/stas00/ipyexperiments/blob/maste
 ## History
 
 A detailed history of changes can be found [here](https://github.com/stas00/ipyexperiments/blob/master/CHANGES.md).
+
+## Related Projects
+
+* https://github.com/Stonesjtu/pytorch_memlab - A simple and accurate CUDA memory management laboratory for pytorch.
+
+(If you know of a related pytorch gpu memory profiler please send a PR to add the link. Thank you!)
+
