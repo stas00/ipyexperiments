@@ -4,7 +4,7 @@
 ## 0.1.18.dev0 (Work In Progress)
 
 - require ipython>=6.0.0 (colab still uses ipython==5.5.0, which breaks events)
-
+- py38 is supported (doc)
 
 ## 0.1.17 (2020-03-30)
 
