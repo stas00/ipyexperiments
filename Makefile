@@ -109,7 +109,7 @@ clean-test-conda: ## remove conda test and coverage artifacts
 dist-conda: clean-conda ## build conda package
 	@echo "\n\n*** Building conda package"
 	mkdir "conda-dist"
-	conda-build ./conda/ -c fastai --output-folder conda-dist
+	conda-build ./conda/ -c conda-forge --output-folder conda-dist
 	ls -l conda-dist/noarch/*tar.bz2
 
 upload-conda: ## release conda package
@@ -208,7 +208,7 @@ test-install: ## test conda/pip package by installing that version them
 	@echo "\n\n*** waiting for $(version) conda version to become visible"
 	@perl -e '$$v=shift; $$p="ipyexperiments"; $$|++; sub ok {`conda search -c stason $$p==$$v >/dev/null 2>&1`; return $$? ? 0 : 1}; print "waiting for $$p-$$v to become available on conda\n"; $$c=0; while (not ok()) { print "\rwaiting: $$c secs"; $$c+=5;sleep 5; }; print "\n$$p-$$v is now available on conda\n"' $(version)
 
-	conda install -y -c fastai -c stason ipyexperiments==$(version)
+	conda install -y -c conda-forge -c stason ipyexperiments==$(version)
 	conda uninstall -y ipyexperiments
 
 	@echo "\n\n*** Install editable version"

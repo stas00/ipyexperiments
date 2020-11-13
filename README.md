@@ -46,7 +46,7 @@ Currently this sub-system logs GPU RAM, general RAM and execution time. But it c
 * conda:
 
    ```
-   conda install -c fastai -c stason ipyexperiments
+   conda install -c conda-forge -c stason ipyexperiments
    ```
 
 * dev:

@@ -1,6 +1,11 @@
 # Changes
 
 
+## 0.1.21.dev0 (Work In Progress)
+
+- fix conda channels
+
+
 ## 0.1.20 (2020-11-12)
 
 - fix requirements - needed pynvml instead of the nvidia-ml-py3 that it relied on earlier
