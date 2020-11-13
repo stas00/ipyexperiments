@@ -1,7 +1,7 @@
 # Changes
 
 
-## 0.1.21.dev0 (Work In Progress)
+## 0.1.21 (2020-11-12)
 
 - fix conda channels
 
