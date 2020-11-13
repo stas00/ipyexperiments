@@ -10,14 +10,13 @@ source:
 
   #{% set git_rev = "v" + data.version %}
   #git_rev: {{ git_rev }}
-  #git_url: https://github.com/fastai/ipyexperiments
+  #git_url: https://github.com/stas00/ipyexperiments
 
 build:
   number: 0
   noarch: python
   script: python setup.py install --single-version-externally-managed --record=record.txt
 
-# nvidia-ml-py3 is in the fastai channel only
 requirements:
   build:
     - python
@@ -26,7 +25,7 @@ requirements:
   run:
     - python
     - ipython
-    - nvidia-ml-py3
+    - pynvml
     - psutil
 
 test:

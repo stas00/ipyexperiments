@@ -3,7 +3,13 @@
 
 ## 0.1.20.dev0 (Work In Progress)
 
-- 
+- fix requirements - needed pynvml instead of the nvidia-ml-py3 that it relied on earlier
+
+
+## 0.1.19 (2020-11-08)
+
+- skipped
+
 
 ## 0.1.18 (2020-11-08)
 

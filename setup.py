@@ -9,7 +9,7 @@ def to_list(buffer): return list(filter(None, map(str.strip, buffer.splitlines()
 
 requirements = to_list("""
   ipython
-  nvidia-ml-py3
+  pynvml
   psutil
   pynvx>=1.0.0;platform_system=="Darwin"
   ipython>=6.0.0 # events support
