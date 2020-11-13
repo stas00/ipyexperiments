@@ -69,7 +69,7 @@ def gpu_mem_get_free_mbs():
     """ Return the amount of free memory (in rounded MBs) """
     return gpu_mem_get_mbs().free
 
-def gpu_mem_get_free_no_cache():
+def gpu_mem_get_free_no_cache_mbs():
     """ Return the amount of free memory after flushing caching (in rounded MBs) """
     gc.collect()
     torch.cuda.empty_cache()
@@ -79,7 +79,7 @@ def gpu_mem_get_used_mbs():
     """ Return the amount of used memory (in rounded MBs) """
     return gpu_mem_get_mbs().used
 
-def gpu_mem_get_used_no_cache():
+def gpu_mem_get_used_no_cache_mbs():
     """ Return the amount of used memory after flushing caching (in rounded MBs) """
     gc.collect()
     torch.cuda.empty_cache()

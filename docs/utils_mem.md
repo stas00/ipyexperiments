@@ -29,9 +29,9 @@ Delete the variable to free up the memory.
 Return the amount of free memory (in rounded MBs)
 
 
-## gpu_mem_get_free_no_cache
+## gpu_mem_get_free_no_cache_mbs
 
-`gpu_mem_get_free_no_cache()`
+`gpu_mem_get_free_no_cache_mbs()`
 
 Return the amount of free memory after flushing caching (in rounded MBs)
 
@@ -49,9 +49,9 @@ Return the amount of total memory (in rounded MBs)
 Return the amount of used memory (in rounded MBs)
 
 
-## gpu_mem_get_used_no_cache
+## gpu_mem_get_used_no_cache_mbs
 
-`gpu_mem_get_used_no_cache()`
+`gpu_mem_get_used_no_cache_mbs()`
 
 Return the amount of used memory after flushing caching (in rounded MBs)
 
