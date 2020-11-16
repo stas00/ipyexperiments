@@ -193,6 +193,15 @@ commit-dev-cycle-push: ## commit version and CHANGES and push
 ##@ Testing new package installation
 
 test-install: ## test conda/pip package by installing that version them
+	@echo "\n\n*** Install/uninstall $(version) conda version"
+	@# skip, throws error when uninstalled @conda uninstall -y ipyexperiments
+
+	@echo "\n\n*** waiting for $(version) conda version to become visible"
+	@perl -e '$$v=shift; $$p="ipyexperiments"; $$|++; sub ok {`conda search -c stason $$p==$$v >/dev/null 2>&1`; return $$? ? 0 : 1}; print "waiting for $$p-$$v to become available on conda\n"; $$c=0; while (not ok()) { print "\rwaiting: $$c secs"; $$c+=5;sleep 5; }; print "\n$$p-$$v is now available on conda\n"' $(version)
+
+	conda install -y -c conda-forge -c stason ipyexperiments==$(version)
+	conda uninstall -y ipyexperiments
+
 	@echo "\n\n*** Install/uninstall $(version) pip version"
 	@pip uninstall -y ipyexperiments
 
@@ -202,14 +211,6 @@ test-install: ## test conda/pip package by installing that version them
 	pip install ipyexperiments==$(version)
 	pip uninstall -y ipyexperiments
 
-	@echo "\n\n*** Install/uninstall $(version) conda version"
-	@# skip, throws error when uninstalled @conda uninstall -y ipyexperiments
-
-	@echo "\n\n*** waiting for $(version) conda version to become visible"
-	@perl -e '$$v=shift; $$p="ipyexperiments"; $$|++; sub ok {`conda search -c stason $$p==$$v >/dev/null 2>&1`; return $$? ? 0 : 1}; print "waiting for $$p-$$v to become available on conda\n"; $$c=0; while (not ok()) { print "\rwaiting: $$c secs"; $$c+=5;sleep 5; }; print "\n$$p-$$v is now available on conda\n"' $(version)
-
-	conda install -y -c conda-forge -c stason ipyexperiments==$(version)
-	conda uninstall -y ipyexperiments
 
 	@echo "\n\n*** Install editable version"
 	pip install -e .
