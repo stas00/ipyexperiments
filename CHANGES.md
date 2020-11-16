@@ -1,6 +1,6 @@
 # Changes
 
-## 0.1.22.dev0 (Work In Progress)
+## 0.1.22 (2020-11-15)
 
 - add a workaround for pynvml not respecting CUDA_VISIBLE_DEVICES settings
 - adjust ipyexperiments.utils.mem getter functions to accept an optional torch gpu id
