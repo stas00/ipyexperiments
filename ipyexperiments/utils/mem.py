@@ -16,8 +16,6 @@ if not use_gpu:
 
 pynvml = load_pynvml_env()
 
-############# gpu memory helper functions ############
-
 GPUMemory = namedtuple('GPUMemory', ['total', 'free', 'used'])
 
 def preload_pytorch():
@@ -28,6 +26,9 @@ def preload_pytorch():
     torch.ones((1, 1)).cuda()
 
 preload_pytorch()  # needed to run first to get the measurements right
+
+
+### Helpers ###
 
 def get_nvml_gpu_id(torch_gpu_id):
     """
@@ -46,8 +47,56 @@ def b2mb(num):
     """ convert Bs to MBs and round down """
     return int(num/2**20)
 
+
+### Get memory stats ###
+
+# for gpu returns GPUMemory(total, free, used)
+# for invalid gpu id returns GPUMemory(0, 0, 0)
+def gpu_mem_get_mbs(torch_gpu_id=None):
+    """ Query nvidia for total, used and free memory for gpu in MBs. if gpu id is not passed, currently selected torch device is used """
+    if not use_gpu:
+        return GPUMemory(0, 0, 0)
+    if torch_gpu_id is None:
+        torch_gpu_id = torch.cuda.current_device()
+    nvml_gpu_id = get_nvml_gpu_id(torch_gpu_id)
+    try:
+        handle = pynvml.nvmlDeviceGetHandleByIndex(nvml_gpu_id)
+        info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+        return GPUMemory(*(map(b2mb, [info.total, info.free, info.used])))
+    except:
+        return GPUMemory(0, 0, 0)
+
+def gpu_mem_get_total_mbs(torch_gpu_id=None):
+    """ Return the amount of total memory (in rounded MBs) """
+    return gpu_mem_get_mbs(torch_gpu_id).total
+
+def gpu_mem_get_free_mbs(torch_gpu_id=None):
+    """ Return the amount of free memory (in rounded MBs) """
+    return gpu_mem_get_mbs(torch_gpu_id).free
+
+def gpu_mem_get_free_no_cache_mbs(torch_gpu_id=None):
+    """ Return the amount of free memory after flushing caching (in rounded MBs) """
+    gc.collect()
+    torch.cuda.empty_cache()
+    return gpu_mem_get_free_mbs(torch_gpu_id)
+
+def gpu_mem_get_used_mbs(torch_gpu_id=None):
+    """ Return the amount of used memory (in rounded MBs) """
+    return gpu_mem_get_mbs(torch_gpu_id).used
+
+def gpu_mem_get_used_no_cache_mbs(torch_gpu_id=None):
+    """ Return the amount of used memory after flushing caching (in rounded MBs) """
+    gc.collect()
+    torch.cuda.empty_cache()
+    return gpu_mem_get_used_mbs(torch_gpu_id)
+
+
+### Do things to the current GPU ###
+
+
 def gpu_mem_allocate_mbs(n, fatal=False):
-    """ Try to allocate n MBs.
+    """ 
+    Try to allocate n MBs on the current device.
 
     Return the variable  holding it on success, None on failure.
 
@@ -60,48 +109,9 @@ def gpu_mem_allocate_mbs(n, fatal=False):
         if not fatal: return None
         raise e
 
-# for gpu returns GPUMemory(total, free, used)
-# for invalid gpu id returns GPUMemory(0, 0, 0)
-def gpu_mem_get_mbs(id=None):
-    """ Query nvidia for total, used and free memory for gpu in MBs. if id is not passed, currently selected torch device is used """
-    if not use_gpu:
-        return GPUMemory(0, 0, 0)
-    if id is None:
-        id = torch.cuda.current_device()
-    nvml_gpu_id = get_nvml_gpu_id(id)
-    try:
-        handle = pynvml.nvmlDeviceGetHandleByIndex(nvml_gpu_id)
-        info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-        return GPUMemory(*(map(b2mb, [info.total, info.free, info.used])))
-    except:
-        return GPUMemory(0, 0, 0)
-
-def gpu_mem_get_total_mbs():
-    """ Return the amount of total memory (in rounded MBs) """
-    return gpu_mem_get_mbs().total
-
-def gpu_mem_get_free_mbs():
-    """ Return the amount of free memory (in rounded MBs) """
-    return gpu_mem_get_mbs().free
-
-def gpu_mem_get_free_no_cache_mbs():
-    """ Return the amount of free memory after flushing caching (in rounded MBs) """
-    gc.collect()
-    torch.cuda.empty_cache()
-    return gpu_mem_get_free_mbs()
-
-def gpu_mem_get_used_mbs():
-    """ Return the amount of used memory (in rounded MBs) """
-    return gpu_mem_get_mbs().used
-
-def gpu_mem_get_used_no_cache_mbs():
-    """ Return the amount of used memory after flushing caching (in rounded MBs) """
-    gc.collect()
-    torch.cuda.empty_cache()
-    return gpu_mem_get_used_mbs()
-
 def gpu_mem_leave_free_mbs(n):
-    """Consume whatever memory is needed so that n MBs are left free.
+    """
+    Consume whatever memory is needed so that n MBs are left free on the current device.
 
     On success it returns a variable that holds the allocated memory, which
     needs to be kept alive as long as it's needed to hold that memory. Call
