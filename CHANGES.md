@@ -2,6 +2,7 @@
 
 ## 0.1.22.dev0 (Work In Progress)
 
+- add a workaround for pynvml not respecting CUDA_VISIBLE_DEVICES settings
 
 
 ## 0.1.21 (2020-11-12)

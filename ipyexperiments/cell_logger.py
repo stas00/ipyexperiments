@@ -1,4 +1,4 @@
-import time, psutil, gc, tracemalloc, threading, weakref, datetime, sys, random
+import time, psutil, gc, tracemalloc, threading, weakref, datetime, sys, random, os
 import logging
 from collections import namedtuple
 from IPython import get_ipython
@@ -20,6 +20,19 @@ def secs2time(secs):
     " secs to time, secs rounded to 3 decimals "
     msec = int(abs(secs-int(secs))*1000)
     return f'{datetime.timedelta(seconds=int(secs))}.{msec:03d}'
+
+def get_nvml_gpu_id(torch_gpu_id):
+    """
+    Remap torch device id to nvml device id, respecting CUDA_VISIBLE_DEVICES. 
+
+    If the latter isn't set return the same id
+    """
+    # if CUDA_VISIBLE_DEVICES is used automagically remap the id since pynvml ignores this env var
+    if "CUDA_VISIBLE_DEVICES" in os.environ:
+        ids = list(map(int, os.environ.get("CUDA_VISIBLE_DEVICES", "").split(",")))
+        return ids[torch_gpu_id] # remap
+    else:
+        return torch_gpu_id
 
 CellLoggerMemory = namedtuple('CellLoggerMemory', ['used_delta', 'peaked_delta', 'used_total'])
 CellLoggerTime   = namedtuple('CellLoggerTime', ['time_delta'])
@@ -255,8 +268,9 @@ class CellLogger():
 
         with self.lock:
             if self.exp is None: return
-            gpu_id     = self.exp.torch.cuda.current_device()
-            gpu_handle = self.exp.pynvml.nvmlDeviceGetHandleByIndex(gpu_id)
+            torch_gpu_id = self.exp.torch.cuda.current_device()
+            nvml_gpu_id = get_nvml_gpu_id(torch_gpu_id)
+            handle = self.exp.pynvml.nvmlDeviceGetHandleByIndex(nvml_gpu_id)
 
         while True:
             # using tracemalloc for tracing peak cpu RAM instead
@@ -267,9 +281,10 @@ class CellLogger():
             # want to measure only the peak memory usage
             with self.lock:
                 if self.exp is None: break
-                gpu_mem_used = self.exp.gpu_ram_used_fast(gpu_handle)
+                gpu_mem_used = self.exp.gpu_ram_used_fast(handle)
             self.gpu_mem_used_peak = max(gpu_mem_used, self.gpu_mem_used_peak)
 
             time.sleep(0.001) # 1msec
 
             if not self.peak_monitoring: break
+            

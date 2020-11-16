@@ -1,6 +1,6 @@
 __all__ = ['IPyExperimentsCPU', 'IPyExperimentsPytorch']
 
-from .cell_logger import CellLogger, b2mb, int2width
+from .cell_logger import CellLogger, b2mb, int2width, get_nvml_gpu_id
 import gc, os, sys, time, psutil, weakref, logging, threading
 from IPython import get_ipython
 from IPython.core.magics.namespace import NamespaceMagics # Used to query namespace.
@@ -363,7 +363,8 @@ class IPyExperimentsGPU(IPyExperimentsCPU):
     def gpu_ram(self):
         """ for the currently selected GPU device return: total, free and used RAM in bytes """
         self.gpu_clear_cache() # clear cache to report the correct data
-        handle = self.pynvml.nvmlDeviceGetHandleByIndex(self.gpu_current_device_id)
+        nvml_gpu_id = get_nvml_gpu_id(self.gpu_current_device_id)
+        handle = self.exp.pynvml.nvmlDeviceGetHandleByIndex(nvml_gpu_id)
         info   = self.pynvml.nvmlDeviceGetMemoryInfo(handle)
         return info.total, info.free, info.used
 

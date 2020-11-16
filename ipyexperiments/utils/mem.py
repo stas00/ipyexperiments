@@ -1,8 +1,9 @@
 "Helper utility functions for memory management"
 
-from ipyexperiments.utils.pynvml_gate import load_pynvml_env
 import gc
+import os
 from collections import namedtuple
+from ipyexperiments.utils.pynvml_gate import load_pynvml_env
 
 try:
     import torch # currently relying on pytorch
@@ -27,6 +28,19 @@ def preload_pytorch():
     torch.ones((1, 1)).cuda()
 
 preload_pytorch()  # needed to run first to get the measurements right
+
+def get_nvml_gpu_id(torch_gpu_id):
+    """
+    Remap torch device id to nvml device id, respecting CUDA_VISIBLE_DEVICES. 
+
+    If the latter isn't set return the same id
+    """
+    # if CUDA_VISIBLE_DEVICES is used automagically remap the id since pynvml ignores this env var
+    if "CUDA_VISIBLE_DEVICES" in os.environ:
+        ids = list(map(int, os.environ.get("CUDA_VISIBLE_DEVICES", "").split(",")))
+        return ids[torch_gpu_id] # remap
+    else:
+        return torch_gpu_id
 
 def b2mb(num):
     """ convert Bs to MBs and round down """
@@ -54,8 +68,9 @@ def gpu_mem_get_mbs(id=None):
         return GPUMemory(0, 0, 0)
     if id is None:
         id = torch.cuda.current_device()
+    nvml_gpu_id = get_nvml_gpu_id(id)
     try:
-        handle = pynvml.nvmlDeviceGetHandleByIndex(id)
+        handle = pynvml.nvmlDeviceGetHandleByIndex(nvml_gpu_id)
         info = pynvml.nvmlDeviceGetMemoryInfo(handle)
         return GPUMemory(*(map(b2mb, [info.total, info.free, info.used])))
     except:
