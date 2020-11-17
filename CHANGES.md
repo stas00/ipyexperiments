@@ -2,7 +2,8 @@
 
 ## 0.1.23.dev0 (Work In Progress)
 
-- 
+- bug fix 
+- require pytest-ipynb for the test suite
 
 
 ## 0.1.22 (2020-11-15)
