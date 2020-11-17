@@ -364,7 +364,7 @@ class IPyExperimentsGPU(IPyExperimentsCPU):
         """ for the currently selected GPU device return: total, free and used RAM in bytes """
         self.gpu_clear_cache() # clear cache to report the correct data
         nvml_gpu_id = get_nvml_gpu_id(self.gpu_current_device_id)
-        handle = self.exp.pynvml.nvmlDeviceGetHandleByIndex(nvml_gpu_id)
+        handle = self.pynvml.nvmlDeviceGetHandleByIndex(nvml_gpu_id)
         info   = self.pynvml.nvmlDeviceGetMemoryInfo(handle)
         return info.total, info.free, info.used
 
