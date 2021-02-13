@@ -1,6 +1,6 @@
 # Changes
 
-## 0.1.24.dev0 (Work In Progress)
+## 0.1.24 (2021-02-13)
 
 - fix preload_pytorch to load the 0th device by default
 - fix the test suite with CUDA_VISIBLE_DEVICES=0 CUDA_DEVICE_ORDER=PCI_BUS_ID to that cuda and pynvml report the same gpus
