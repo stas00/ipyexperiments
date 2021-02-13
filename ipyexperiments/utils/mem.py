@@ -18,13 +18,14 @@ pynvml = load_pynvml_env()
 
 GPUMemory = namedtuple('GPUMemory', ['total', 'free', 'used'])
 
-def preload_pytorch():
+def preload_pytorch(device_id=0):
     """ Do a small operation on CUDA to get the pytorch/cuda structures in place.
 
     A must to be run first if you're going to compare any CUDA-related numbers.
     """
-    torch.ones((1, 1)).cuda()
+    torch.ones((1, 1)).to(device_id)
 
+# XXX: not sure if this should be run by default as perhaps it'd have some side-effects
 preload_pytorch()  # needed to run first to get the measurements right
 
 
@@ -32,7 +33,7 @@ preload_pytorch()  # needed to run first to get the measurements right
 
 def get_nvml_gpu_id(torch_gpu_id):
     """
-    Remap torch device id to nvml device id, respecting CUDA_VISIBLE_DEVICES. 
+    Remap torch device id to nvml device id, respecting CUDA_VISIBLE_DEVICES.
 
     If the latter isn't set return the same id
     """
@@ -95,7 +96,7 @@ def gpu_mem_get_used_no_cache_mbs(torch_gpu_id=None):
 
 
 def gpu_mem_allocate_mbs(n, fatal=False):
-    """ 
+    """
     Try to allocate n MBs on the current device.
 
     Return the variable  holding it on success, None on failure.
