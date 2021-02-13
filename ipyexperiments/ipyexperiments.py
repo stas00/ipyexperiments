@@ -400,7 +400,7 @@ class IPyExperimentsPytorch(IPyExperimentsGPU):
         self.gpu_current_device_id = self.torch.cuda.current_device()
 
         # force pytorch to pre-load cuDNN and its kernels to claim unreclaimable memory
-        torch.ones((1, 1)).cuda()
+        torch.ones((1, 1)).to(self.gpu_current_device_id)
 
         # check that all is ready to go, and we get the RAM info
         gpu_ram_total, gpu_ram_free, gpu_ram_used = self.gpu_ram()
