@@ -21,9 +21,13 @@ define WAIT_TILL_PIP_VER_IS_AVAILABLE_BASH =
 # pip install ipyexperiments==
 # which doesn't find the unspecified version and returns all available
 # versions instead, which is what we search
+# update: pip >= 20.3 no longer supports this
+# need to add the old resolver option --use-deprecated=legacy-resolver
+#
+
 function is_pip_ver_available() {
     local ver="$$0"
-    local out="$$(pip install ipyexperiments== |& grep $$ver)"
+    local out="$$(pip install --use-deprecated=legacy-resolver ipyexperiments== |& grep $$ver)"
     if [[ -n "$$out" ]]; then
         echo 1
     else
