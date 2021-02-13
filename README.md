@@ -97,6 +97,27 @@ See [this demo notebook](https://github.com/stas00/ipyexperiments/blob/master/de
 
 Please see [CONTRIBUTING.md](https://github.com/stas00/ipyexperiments/blob/master/CONTRIBUTING.md).
 
+## Caveats
+
+### Google Colab
+
+As of this writing colab runs [a really old version of ipython (5.5.0)](https://github.com/googlecolab/colabtools/issues/891#issuecomment-562427698) which doesn't support the modern ipython events API.
+
+To solve this problem run:
+
+```
+!pip install -q --upgrade ipython
+!pip install -q --upgrade ipykernel
+
+# Restart with new IPython.
+import os
+import signal
+os.kill(os.getpid(), signal.SIGTERM)
+```
+
+Run that cell, which will crash the current session. When you restart it the code will work normally.
+
+
 ## History
 
 A detailed history of changes can be found [here](https://github.com/stas00/ipyexperiments/blob/master/CHANGES.md).
@@ -106,4 +127,3 @@ A detailed history of changes can be found [here](https://github.com/stas00/ipye
 * https://github.com/Stonesjtu/pytorch_memlab - A simple and accurate CUDA memory management laboratory for pytorch.
 
 (If you know of a related pytorch gpu memory profiler please send a PR to add the link. Thank you!)
-
