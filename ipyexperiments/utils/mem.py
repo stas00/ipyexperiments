@@ -23,10 +23,9 @@ def preload_pytorch(device_id=0):
 
     A must to be run first if you're going to compare any CUDA-related numbers.
     """
+    if torch.cuda.is_initialized():
+        return
     torch.ones((1, 1)).to(device_id)
-
-# XXX: not sure if this should be run by default as perhaps it'd have some side-effects
-preload_pytorch()  # needed to run first to get the measurements right
 
 
 ### Helpers ###

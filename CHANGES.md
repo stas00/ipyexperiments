@@ -2,12 +2,13 @@
 
 ## 0.1.24.dev0 (Work In Progress)
 
-- 
+- fix preload_pytorch to load the 0th device by default
+- fix the test suite with CUDA_VISIBLE_DEVICES=0 CUDA_DEVICE_ORDER=PCI_BUS_ID to that cuda and pynvml report the same gpus
+- `preload_pytorch` is no longer automatically run in ipyexperiments.utils.mem - as it may interfere with other systems. it's an explicit call now.
 
+## 0.1.23 (2020-11-16)
 
-## 0.1.23.dev0 (2020-11-16)
-
-- bug fix 
+- bug fix
 - require pytest-ipynb for the test suite
 
 

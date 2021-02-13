@@ -4,6 +4,13 @@
 
 This module includes helper utilities for memory diagnostics and debug.
 
+
+If you want to measure relative usages, always preload pytorch kernels first:
+```
+from ipyexperiments.utils.mem import preload_pytorch
+preload_pytorch()
+```
+
 Currently these functions rely on pytorch, but can be ported to support other backends.
 
 # API
@@ -73,7 +80,7 @@ Example:
 Create a reproducible test case for *CUDA Out Of Memory* that will work regardless of which GPU card it will run on:
 
 ```
-from ipyexperiments.utils.mem import *
+from ipyexperiments.utils.mem import gpu_mem_leave_free_mbs
 gpu_mem_leave_free_mbs(100)
 # now run some code that uses up 100MB and causes CUDA OOM
 ```

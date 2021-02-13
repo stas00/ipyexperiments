@@ -1,8 +1,10 @@
 import pytest
-from ipyexperiments.utils.mem import *
+from ipyexperiments.utils.mem import gpu_mem_get_free_mbs, preload_pytorch, gpu_mem_leave_free_mbs
 from math import isclose
 
 def test_leave_free_mbs():
+    preload_pytorch()
+
     delta = 10
     free_before = gpu_mem_get_free_mbs()
     assert free_before > delta, "have some free gpu memory"
