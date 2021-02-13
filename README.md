@@ -103,19 +103,26 @@ Please see [CONTRIBUTING.md](https://github.com/stas00/ipyexperiments/blob/maste
 
 As of this writing colab runs [a really old version of ipython (5.5.0)](https://github.com/googlecolab/colabtools/issues/891#issuecomment-562427698) which doesn't support the modern ipython events API.
 
-To solve this problem run:
+To solve this problem automatically so you never have to think about it again, always add this cell as the very first one in each colab notebook
 
 ```
-!pip install -q --upgrade ipython
-!pip install -q --upgrade ipykernel
+# This magic cell should be put first in your colab notebook.
+# It'll automatically upgrade colab's really antique ipython/ipykernel to their
+# latest versions which are required for packages like ipyexperiments
+from packaging import version
+import IPython, ipykernel
+if version.parse(IPython.__version__) <= version.parse("5.5.0"):
+    !pip install -q --upgrade ipython
+    !pip install -q --upgrade ipykernel
 
-# Restart with new IPython.
-import os
-import signal
-os.kill(os.getpid(), signal.SIGTERM)
+    import os
+    import signal
+    os.kill(os.getpid(), signal.SIGTERM)
+print(f"ipykernel=={ipykernel.__version__}")
+print(f"IPython=={IPython.__version__}")
 ```
 
-Run that cell, which will crash the current session. When you restart it the code will work normally.
+If you're on the default old ipykernel/ipython this cell will update it, then crash the current session. It will automatically restart the execution and the code will work normally.
 
 
 ## History
