@@ -9,7 +9,6 @@ import random
 import sys
 import threading
 import time
-import weakref
 
 logging.basicConfig(
     format="%(filename)s:%(lineno)s - %(funcName)20s() | %(message)s",
@@ -45,7 +44,7 @@ def get_nvml_gpu_id(torch_gpu_id):
     else:
         return torch_gpu_id
 
-process = psutil.Process(os.getpid())
+process = psutil.Process()
 def cpu_ram_used():  return process.memory_info().rss
 
 CellLoggerMemory = namedtuple('CellLoggerMemory', ['used_delta', 'peaked_delta', 'used_total'])
