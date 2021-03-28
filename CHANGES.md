@@ -1,5 +1,10 @@
 # Changes
 
+## 0.1.27.dev0 (Work In Progress)
+
+- 
+
+
 ## 0.1.26 (2021-03-27)
 
 - get rid of the attempt to use the backend methods in the cell logger, too many deadlock issues - just use pytorch for now if available and remove the pointless abstraction (needs more cleanup)
