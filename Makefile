@@ -161,6 +161,11 @@ release: ## do it all (other than testing)
 	${MAKE} changes-dev-cycle
 	${MAKE} commit-dev-cycle-push
 
+release-end: ## if test-install fails (conda and pip don't cooperate)
+	${MAKE} bump-dev
+	${MAKE} changes-dev-cycle
+	${MAKE} commit-dev-cycle-push
+
 ##@ git helpers
 
 git-pull: ## git pull
