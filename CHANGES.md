@@ -2,7 +2,11 @@
 
 ## 0.1.25 (Work In Progress)
 
-- 
+- get rid of the attempt to use the backend methods in the cell logger, too many deadlock issues - just use pytorch for now if available and remove the pointless abstraction (needs more cleanup)
+- completely rewrite general RAM reporting as I discovered tracemalloc can't track non-python application, so general RAM reporting was completely invalid at times. Switch to the same approach as pynvml tracking, with a thread to monitor peak memory usage.
+- simplify the logic of how gpu peak memory is calculated
+- fix broken tests now that RAM is reported correctly
+- improve logging format
 
 
 ## 0.1.24 (2021-02-13)
@@ -10,6 +14,7 @@
 - fix preload_pytorch to load the 0th device by default
 - fix the test suite with CUDA_VISIBLE_DEVICES=0 CUDA_DEVICE_ORDER=PCI_BUS_ID to that cuda and pynvml report the same gpus
 - `preload_pytorch` is no longer automatically run in ipyexperiments.utils.mem - as it may interfere with other systems. it's an explicit call now.
+
 
 ## 0.1.23 (2020-11-16)
 

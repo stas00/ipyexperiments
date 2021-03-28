@@ -1,12 +1,23 @@
 __all__ = ['IPyExperimentsCPU', 'IPyExperimentsPytorch']
 
-from .cell_logger import CellLogger, b2mb, int2width, get_nvml_gpu_id
-import gc, os, sys, time, psutil, weakref, logging, threading
+import gc
+import logging
+import os
+import psutil
+import sys
+import threading
+import time
+import weakref
 from IPython import get_ipython
 from IPython.core.magics.namespace import NamespaceMagics # Used to query namespace.
 from collections import namedtuple
+from .cell_logger import CellLogger, b2mb, int2width, get_nvml_gpu_id
 
-logging.basicConfig()
+logging.basicConfig(
+    format="%(filename)s:%(lineno)s - %(funcName)20s() | %(message)s",
+    handlers=[logging.StreamHandler(sys.stderr)],
+)
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
 #logger.setLevel(logging.DEBUG)
@@ -35,11 +46,8 @@ class IPyExperiments():
 
         logger.debug(f"{self.__class__.__name__}::__init__: {self}")
 
-        if cl_enable:
-            self.cl = CellLogger(exp=self, compact=cl_compact, gc_collect=cl_gc_collect, set_seed=cl_set_seed)
-        else:
-            self.cl = None
-
+        self.cl_enable = cl_enable
+        self.cl_kwargs = dict(compact=cl_compact, gc_collect=cl_gc_collect, set_seed=cl_set_seed)
         self.enable = exp_enable
 
         self.running = False
@@ -87,7 +95,11 @@ class IPyExperiments():
             print("\n") # extra vertical white space, to not mix with user's outputs
 
         # start the per cell sub-system
-        if self.cl: self.cl.start()
+        if self.cl_enable:
+            self.cl = CellLogger(exp=self, **self.cl_kwargs)
+            self.cl.start()
+        else:
+            self.cl = None
 
     def __enter__(self):
         return self
@@ -185,11 +197,7 @@ class IPyExperiments():
         if self.cl:
             logger.debug(self.__class__.__name__ +f"finish: 0 {self}")
             self.cl.stop()
-            # must acquire thread lock to avoid thread race condition where the
-            # exp object could disappear half-way through thread's processing
-            with self.cl.lock:
-                self.cl.exp = None # untangle the circular reference
-                self.cl     = None # free the CL object
+            self.cl = None # free the CL object
 
         self.running = False
 

@@ -2,7 +2,9 @@
 
 ############# ipython on exception memory leak prevention helpers ############
 
-import os, functools, traceback
+import os
+import functools
+import traceback
 
 def is_in_ipython():
     "Is the code running in the ipython environment (jupyter including)"

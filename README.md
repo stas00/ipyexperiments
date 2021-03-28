@@ -122,7 +122,7 @@ print(f"ipykernel=={ipykernel.__version__}")
 print(f"IPython=={IPython.__version__}")
 ```
 
-If you're on the default old ipykernel/ipython this cell will update it, then crash the current session. It will automatically restart the execution and the code will work normally.
+If you're on the default old ipykernel/ipython this cell will update it, then crash the current session. After the crash restart the execution and the code will work normally.
 
 
 ## History

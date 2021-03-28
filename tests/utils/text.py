@@ -12,7 +12,8 @@ from math import isclose
 ############## ram allocation helpers #################
 
 def consume_cpu_ram(n): return np.ones((n, n))
-def consume_gpu_ram(n): return torch.ones((n, n)).cuda()
+# it's important that we allocate directly on gpu here
+def consume_gpu_ram(n): return torch.ones((n, n), device=torch.device('cuda:0'))
 def consume_cpu_ram_128mb():  return consume_cpu_ram(2**12)
 def consume_gpu_ram_256mb():  return consume_gpu_ram(2**13)
 def consume_gpu_ram_1024mb(): return consume_gpu_ram(2**14)

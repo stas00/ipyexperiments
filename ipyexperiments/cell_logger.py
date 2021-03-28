@@ -1,9 +1,20 @@
-import time, psutil, gc, tracemalloc, threading, weakref, datetime, sys, random, os
-import logging
-from collections import namedtuple
 from IPython import get_ipython
+from collections import namedtuple
+import datetime
+import gc
+import logging
+import os
+import psutil
+import random
+import sys
+import threading
+import time
+import weakref
 
-logging.basicConfig()
+logging.basicConfig(
+    format="%(filename)s:%(lineno)s - %(funcName)20s() | %(message)s",
+    handlers=[logging.StreamHandler(sys.stderr)],
+)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
 #logger.setLevel(logging.DEBUG)
@@ -23,7 +34,7 @@ def secs2time(secs):
 
 def get_nvml_gpu_id(torch_gpu_id):
     """
-    Remap torch device id to nvml device id, respecting CUDA_VISIBLE_DEVICES. 
+    Remap torch device id to nvml device id, respecting CUDA_VISIBLE_DEVICES.
 
     If the latter isn't set return the same id
     """
@@ -33,6 +44,9 @@ def get_nvml_gpu_id(torch_gpu_id):
         return ids[torch_gpu_id] # remap
     else:
         return torch_gpu_id
+
+process = psutil.Process(os.getpid())
+def cpu_ram_used():  return process.memory_info().rss
 
 CellLoggerMemory = namedtuple('CellLoggerMemory', ['used_delta', 'peaked_delta', 'used_total'])
 CellLoggerTime   = namedtuple('CellLoggerTime', ['time_delta'])
@@ -70,12 +84,13 @@ class CellLogger():
 
         # any subclass object of IPyExperiments that gives us access to its
         # specific memory measurement functions
-        #
-        # use weakref so that the parent object can go out of scope and be freed.
-        # proxy seems to be simpler to use than weakref.ref, which needs to be
-        # called self.exp().foo
-        self.exp = weakref.proxy(exp)
-        self.lock = threading.Lock()
+
+        self.backend = exp.backend
+
+        if self.backend == "pytorch":
+            self.pynvml = exp.pynvml
+            self.torch = exp.torch
+            self.gpu_current_device_id = exp.gpu_current_device_id
 
         self.compact    = compact    # one line printouts
         self.gc_collect = gc_collect # don't use when tracking mem leaks
@@ -107,24 +122,35 @@ class CellLogger():
             CellLoggerTime(0)
         )
 
+    # XXX: all this needs to be refactored - tired of hunting lock deadlocks, so just as well drop
+    # the idea of having this extendable to other backends for now and just use it for pytorch
+    def gpu_clear_cache(self): self.torch.cuda.empty_cache()
+    def gpu_ram(self):
+        """ for the currently selected GPU device return: total, free and used RAM in bytes """
+        self.gpu_clear_cache() # clear cache to report the correct data
+        nvml_gpu_id = get_nvml_gpu_id(self.gpu_current_device_id)
+        handle = self.pynvml.nvmlDeviceGetHandleByIndex(nvml_gpu_id)
+        info   = self.pynvml.nvmlDeviceGetMemoryInfo(handle)
+        return info.total, info.free, info.used
+
+    def gpu_ram_used(self):  return self.gpu_ram()[2]
+    def gpu_ram_avail(self): return self.gpu_ram()[1]
+    # use cached handle and clear no cache
+    def gpu_ram_used_fast(self, gpu_handle): return self.pynvml.nvmlDeviceGetMemoryInfo(gpu_handle).used
+
     def start(self):
         """Register memory profiling tools to IPython instance."""
         self.running = True
         logger.debug("CellLogger: Starting")
-
-        # this seem to be unreliable if the parent goes away, and the thread got
-        # delayed, so make a copy (can be removed once the thread is no longer
-        # needed in the code - needs pytorch to implement multiple peak mem counters)
-        self.backend = self.exp.backend
 
         # self.exp does it when needed
         #preload_pytorch()
 
         # initial measurements
         if self.gc_collect: gc.collect()
-        self.cpu_mem_used_prev = self.exp.cpu_ram_used()
-        if self.backend != 'cpu':
-            self.gpu_mem_used_prev = self.exp.gpu_ram_used()
+        self.cpu_mem_used_prev = cpu_ram_used()
+        if self.backend == "pytorch":
+            self.gpu_mem_used_prev = self.gpu_ram_used()
         self.ipython.events.register("pre_run_cell",  self.pre_run_cell)
         logger.debug(f"registered pre_run_cell: {self.pre_run_cell}")
         self.ipython.events.register("post_run_cell", self.post_run_cell)
@@ -164,82 +190,78 @@ class CellLogger():
 
 
     def pre_run_cell(self, info):
-        logger.debug(f"pre_run_cell: 1 {self.exp}")
-
         # seed reset
         if self.set_seed != 0: set_seed(self.set_seed)
 
-        # start RAM tracing
-        tracemalloc.start()
+        self.cpu_mem_used_at_cell_start = cpu_ram_used()
+        if self.backend == "pytorch":
+            self.gpu_mem_used_at_cell_start = self.gpu_ram_used()
 
         # XXX: perhaps can be replaced with using torch.cuda.reset_max_cached_memory() once pytorch 1.0.1 is released, will need to check that pytorch ver >= 1.0.1
         #
         # this thread samples RAM usage as long as the current cell is running
-        if self.backend != 'cpu':
-            self.peak_monitoring = True
-            peak_monitor_thread = threading.Thread(target=self.peak_monitor_func)
-            peak_monitor_thread.daemon = True
-            peak_monitor_thread.start()
+        self.peak_monitoring = True
+        peak_monitor_thread = threading.Thread(target=self.peak_monitor_func)
+        peak_monitor_thread.daemon = True
+        peak_monitor_thread.start()
 
         # time before we execute the current cell
         self.time_start = time.time()
 
 
     def post_run_cell(self, result):
-        logger.debug(f"post_run_cell: 1 {self.exp}")
         if not self.running: return
+
+        # this sends a signal to peak_monitor_func to complete its loop
+        self.peak_monitoring = False
 
         self.time_delta = time.time() - self.time_start
 
-        if self.backend != 'cpu':
-            self.peak_monitoring = False
-
         if self.gc_collect: gc.collect()
 
-        # instead of needing a peak memory monitoring thread, tracemalloc does
-        # the job of getting newly used and peaked memory automatically, since
-        # it tracks all malloc/free calls.
-        cpu_mem_used_delta, cpu_mem_used_peak = tracemalloc.get_traced_memory()
-        tracemalloc.stop() # reset accounting
+        # tracemalloc was tried, but it misses all non-python memory allocations so it had to go
 
-        with self.lock:
-            if self.exp is None: return
-            self.cpu_mem_used_new = self.exp.cpu_ram_used()
-        self.cpu_mem_used_delta   = cpu_mem_used_delta
-        self.cpu_mem_peaked_delta = max(0, cpu_mem_used_peak - cpu_mem_used_delta)
+        self.cpu_mem_used_new = cpu_ram_used()
+        self.cpu_mem_used_delta = self.cpu_mem_used_new - self.cpu_mem_used_at_cell_start
+        # see the logic for gpu below for details of the following
+        self.cpu_mem_peaked_delta = max(0, self.cpu_mem_used_peak - self.cpu_mem_used_at_cell_start)
+        if self.cpu_mem_used_delta > 0:
+            self.cpu_mem_peaked_delta = max(0, self.cpu_mem_peaked_delta - self.cpu_mem_used_delta)
 
-        if self.backend != 'cpu':
-            with self.lock:
-                if self.exp is None: return
-                self.gpu_mem_used_new = self.exp.gpu_ram_used()
+        if self.backend == "pytorch":
+            self.gpu_mem_used_new = self.gpu_ram_used()
 
-            # delta_used is the difference between current used mem and used mem at the start
-            self.gpu_mem_used_delta = self.gpu_mem_used_new - self.gpu_mem_used_prev
+            # delta_used is the difference between used mem at current vs. at cell start
+            self.gpu_mem_used_delta = self.gpu_mem_used_new - self.gpu_mem_used_at_cell_start
 
-            # peaked_delta is the overhead if any. It is calculated as follows:
+            # peaked_delta is the temporary overhead if any.
+            #
+            # the idea is that in order to know how much memory the cell consumed one needs to sum
+            # up used delta and peaked delta
+            #
+            # It is calculated as follows:
             #
             # 1. The difference between the peak memory and the used memory at the
             # start is measured:
             # 2a. If it's negative, then peaked_delta is 0
             # 2b. Otherwise, if used_delta is positive it gets subtracted from peaked_delta
             # XXX: 2a shouldn't be needed once we have a reliable peak counter
-            self.gpu_mem_peaked_delta = self.gpu_mem_used_peak - self.gpu_mem_used_prev
-            if self.gpu_mem_peaked_delta <= 0:
-                self.gpu_mem_peaked_delta = 0
-            elif self.gpu_mem_used_delta > 0:
-                self.gpu_mem_peaked_delta -= self.gpu_mem_used_delta
+            self.gpu_mem_peaked_delta = max(0, self.gpu_mem_used_peak - self.gpu_mem_used_at_cell_start)
+            if self.gpu_mem_used_delta > 0:
+                self.gpu_mem_peaked_delta = max(0, self.gpu_mem_peaked_delta - self.gpu_mem_used_delta)
+
 
         if self.compact:
             if 1:
                 out  = f"CPU: {b2mb(self.cpu_mem_used_delta):0.0f}/{b2mb(self.cpu_mem_peaked_delta):0.0f}/{b2mb(self.cpu_mem_used_new):0.0f} MB"
-            if self.backend != 'cpu':
+            if self.backend == "pytorch":
                 out += f" | GPU: {b2mb(self.gpu_mem_used_delta):0.0f}/{b2mb(self.gpu_mem_peaked_delta):0.0f}/{b2mb(self.gpu_mem_used_new):0.0f} MB"
             out += f" | Time {secs2time(self.time_delta)} | (Consumed/Peaked/Used Total)"
             print(out)
         else:
             if 1:
                 vals  = [self.cpu_mem_used_delta, self.cpu_mem_peaked_delta, self.cpu_mem_used_new]
-            if self.backend != 'cpu':
+            if self.backend == "pytorch":
                 vals += [self.gpu_mem_used_delta, self.gpu_mem_peaked_delta, self.gpu_mem_used_new]
             w = int2width(*map(b2mb, vals)) + 1 # some air
             if w < 10: w = 10 # accommodate header width
@@ -247,12 +269,12 @@ class CellLogger():
             print(f"{pre}RAM: {'△Consumed':>{w}} {'△Peaked':>{w}}    {'Used Total':>{w}} | Exec time {secs2time(self.time_delta)}")
             if 1:
                 print(f"{pre}CPU: {b2mb(self.cpu_mem_used_delta):{w},.0f} {b2mb(self.cpu_mem_peaked_delta):{w},.0f} {b2mb(self.cpu_mem_used_new):{w},.0f} MB |")
-            if self.backend != 'cpu':
+            if self.backend == "pytorch":
                 print(f"{pre}GPU: {b2mb(self.gpu_mem_used_delta):{w},.0f} {b2mb(self.gpu_mem_peaked_delta):{w},.0f} {b2mb(self.gpu_mem_used_new):{w},.0f} MB |")
 
         # for self.data accessor
         self.cpu_mem_used_prev = self.cpu_mem_used_new
-        if self.backend != 'cpu':
+        if self.backend == "pytorch":
             self.gpu_mem_used_prev = self.gpu_mem_used_new
 
         self.data = CellLoggerData(
@@ -266,25 +288,21 @@ class CellLogger():
         self.cpu_mem_used_peak = -1
         self.gpu_mem_used_peak = -1
 
-        with self.lock:
-            if self.exp is None: return
-            torch_gpu_id = self.exp.torch.cuda.current_device()
+        if self.backend == "pytorch":
+            torch_gpu_id = self.torch.cuda.current_device()
             nvml_gpu_id = get_nvml_gpu_id(torch_gpu_id)
-            handle = self.exp.pynvml.nvmlDeviceGetHandleByIndex(nvml_gpu_id)
+            handle = self.pynvml.nvmlDeviceGetHandleByIndex(nvml_gpu_id)
 
         while True:
-            # using tracemalloc for tracing peak cpu RAM instead
-            #cpu_mem_used = self.exp.cpu_ram_used()
-            #self.cpu_mem_used_peak = max(cpu_mem_used, self.cpu_mem_used_peak)
+            self.cpu_mem_used_peak = max(cpu_ram_used(), self.cpu_mem_used_peak)
 
-            # no gc.collect, empty_cache here, since it has to be fast and we
-            # want to measure only the peak memory usage
-            with self.lock:
-                if self.exp is None: break
-                gpu_mem_used = self.exp.gpu_ram_used_fast(handle)
-            self.gpu_mem_used_peak = max(gpu_mem_used, self.gpu_mem_used_peak)
+            if self.backend == "pytorch":
+                # no gc.collect, empty_cache here, since it has to be fast and we
+                # want to measure only the peak memory usage
+                gpu_mem_used = self.gpu_ram_used_fast(handle)
+                self.gpu_mem_used_peak = max(gpu_mem_used, self.gpu_mem_used_peak)
 
-            time.sleep(0.001) # 1msec
+            # can't sleep or will not catch the peak right
+            # time.sleep(0.001) # 1msec
 
             if not self.peak_monitoring: break
-            
