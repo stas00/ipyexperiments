@@ -15,7 +15,7 @@ Currently these functions rely on pytorch, but can be ported to support other ba
 
 # API
 ```
-from ipyexperiments.utils.mem import *
+from ipyexperiments.utils.mem import gpu_mem_allocate_mbs # etc
 ```
 ## gpu_mem_allocate_mbs
 

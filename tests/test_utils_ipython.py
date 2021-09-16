@@ -1,5 +1,5 @@
 import pytest
-from ipyexperiments.utils.ipython import *
+from ipyexperiments.utils.ipython import ipython_tb_clear_frames, ipython_tb_clear_frames_ctx
 
 # at the moment just a syntax check, the test would be useless w/o ipython env
 

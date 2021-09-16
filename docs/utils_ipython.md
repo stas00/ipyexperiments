@@ -8,7 +8,7 @@ Currently, the main functions are to provide workaround solutions for [memory le
 
 ## API
 ```
-from ipyexperiments.utils.ipython import *
+from ipyexperiments.utils.ipython import is_in_ipython, ipython_tb_clear_frames, ipython_tb_clear_frames_ctx
 ```
 
 ### is_in_ipython
