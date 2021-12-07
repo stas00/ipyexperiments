@@ -1,8 +1,9 @@
 # Changes
 
-## 0.1.27 (2021-12-07)
+## 0.1.27.dev0 (Work In Progress)
 
 - fix implicit imports
+- fix `ipyexperiments.utils.ipython.ipython_tb_clear_frames`
 
 
 ## 0.1.26 (2021-03-27)

@@ -2,8 +2,9 @@
 
 ############# ipython on exception memory leak prevention helpers ############
 
-import os
 import functools
+import os
+import sys
 import traceback
 
 def is_in_ipython():
@@ -43,9 +44,9 @@ def ipython_tb_clear_frames(func):
         try:
             return func(*args, **kwargs)
         except:
-            type, val, tb = sys.exc_info()
+            exc_type, exc_val, exc_tb = sys.exc_info()
             traceback.clear_frames(exc_tb)
-            raise type(val).with_traceback(tb) from None
+            raise exc_type(exc_val).with_traceback(exc_tb) from None
     return wrapper
 
 
@@ -63,7 +64,8 @@ class ipython_tb_clear_frames_ctx():
     ```
 
     """
-    def __enter__(self): return self
+    def __enter__(self):
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if not exc_val: return True
