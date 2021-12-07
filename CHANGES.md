@@ -1,6 +1,6 @@
 # Changes
 
-## 0.1.27.dev0 (Work In Progress)
+## 0.1.27 (2021-12-07)
 
 - fix implicit imports
 
