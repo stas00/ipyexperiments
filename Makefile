@@ -136,7 +136,10 @@ install: clean ## install the package to the active python's site-packages
 	python setup.py install
 
 test: ## run tests with the default python
+	@echo "Part 1: python tests"
 	CUDA_VISIBLE_DEVICES=0 CUDA_DEVICE_ORDER=PCI_BUS_ID pytest
+	@echo "Part 2: ipynb tests"
+	CUDA_VISIBLE_DEVICES=0 CUDA_DEVICE_ORDER=PCI_BUS_ID pytest --nbmake
 
 test-cpu: ## run tests with the default python and CUDA_VISIBLE_DEVICES=""
 	CUDA_VISIBLE_DEVICES="" pytest tests/*cpu*

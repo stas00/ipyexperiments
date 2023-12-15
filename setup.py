@@ -15,12 +15,17 @@ requirements = to_list("""
   ipython>=6.0.0 # events support
 """)
 
-setup_requirements = ['pytest-runner']
+setup_requirements = []
 
 test_requirements = to_list("""
   pytest
-  pytest-ipynb
+  nbmake
 """)
+
+extras_requirements = {
+    "dev": requirements,
+    "testing": test_requirements,
+}
 
 setup(
     name = 'ipyexperiments',
@@ -31,18 +36,17 @@ setup(
 
     install_requires = requirements,
     setup_requires   = setup_requirements,
-    tests_require    = test_requirements,
+    extras_require = extras_requirements,
     python_requires  = '>=3.6',
-
     test_suite = 'tests',
 
     license = "Apache License 2.0",
 
-    description = "jupyter/ipython experiment containers for GPU and general RAM re-use and memory leaks detection.",
+    description = "jupyter/ipython experiment containers for GPU+CPU memory profiling, re-use and memory leaks detection.",
     long_description = long_description,
     long_description_content_type = "text/markdown",
     url = 'https://github.com/stas00/ipyexperiments',
-    keywords = 'ipyexperiments, jupyter, ipython, memory, gpu',
+    keywords = 'ipyexperiments, jupyter, ipython, memory, gpu, memory profiler',
 
     author = "Stas Bekman",
     author_email = 'stas@stason.org',
@@ -55,6 +59,9 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
     ],
 
     zip_safe = False,
