@@ -2,7 +2,7 @@
 
 ## 0.1.29.dev0 (Work In Progress)
 
-- 
+- add CUDA_MODULE_LOADING=EAGER to force CUDA kernel preloading
 
 
 ## 0.1.28 (2021-12-07)

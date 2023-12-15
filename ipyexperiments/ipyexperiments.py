@@ -25,6 +25,10 @@ logger.setLevel(logging.ERROR)
 IPyExperimentMemory = namedtuple('IPyExperimentMemory', ['consumed', 'reclaimed', 'available'])
 IPyExperimentData   = namedtuple('IPyExperimentData', ['cpu', 'gpu'])
 
+# this forces preloading of all CUDA kernels, so that we don't get misleading measurements at runtime
+# this is needed since pytorch-1.13 where lazy loading has been introduced
+os.environ['CUDA_MODULE_LOADING'] = 'EAGER'
+
 process = psutil.Process(os.getpid())
 
 class IPyExperiments():
