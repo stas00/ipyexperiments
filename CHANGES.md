@@ -1,6 +1,6 @@
 # Changes
 
-## 0.1.29.dev0 (Work In Progress)
+## 0.1.29 (2023-12-14)
 
 - add CUDA_MODULE_LOADING=EAGER to force CUDA kernel preloading
 - drop the no-longer working pytest-ipynb, and switch to nbmake for testing
